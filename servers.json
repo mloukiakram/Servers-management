@@ -214,28 +214,28 @@
     "ip": "212.95.42.194",
     "provider": "Lease Web",
     "category": "Low Delivery",
-    "status": "Low Delivery"
+    "status": "Active"
   },
   {
     "id": "sl2185",
     "ip": "95.211.192.231",
     "provider": "Lease Web",
     "category": "Low Delivery",
-    "status": "Low Delivery"
+    "status": "Active"
   },
   {
     "id": "sl2192",
     "ip": "209.250.234.143",
     "provider": "Ex2",
     "category": "Low Delivery",
-    "status": "Low Delivery"
+    "status": "Active"
   },
   {
     "id": "sl2195",
     "ip": "185.49.70.102",
     "provider": "coretek.host",
     "category": "Low Delivery",
-    "status": "Low Delivery"
+    "status": "Active"
   },
   {
     "id": "sl2155",
@@ -249,7 +249,7 @@
     "ip": "163.172.87.67",
     "provider": "Scaleway",
     "category": "Low Delivery",
-    "status": "Low Delivery"
+    "status": "Active"
   },
   {
     "id": "sl2023",
@@ -263,7 +263,7 @@
     "ip": "104.192.4.57",
     "provider": "1and1",
     "category": "Low Delivery",
-    "status": "Low Delivery"
+    "status": "Active"
   },
   {
     "id": "sl2183",
