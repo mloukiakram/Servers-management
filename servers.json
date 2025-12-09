@@ -284,104 +284,104 @@
     "ip": "157.15.124.206",
     "provider": "domainesia",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2147",
     "ip": "51.75.202.196",
     "provider": "Ovh.pt (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2221",
     "ip": "51.81.186.7",
     "provider": "OVH (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2222",
     "ip": "51.178.54.83",
     "provider": "Ovh.pt (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2223",
     "ip": "51.178.55.208",
     "provider": "Ovh.pt (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2224",
     "ip": "51.178.53.132",
     "provider": "Ovh.pt (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2226",
     "ip": "57.128.237.69",
     "provider": "OVH (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2227",
     "ip": "57.128.237.70",
     "provider": "OVH (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2228",
     "ip": "57.128.237.71",
     "provider": "OVH (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2229",
     "ip": "57.128.237.68",
     "provider": "OVH (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2230",
     "ip": "15.204.246.205",
     "provider": "OVH (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2231",
     "ip": "15.204.246.18",
     "provider": "OVH (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2232",
     "ip": "15.204.246.23",
     "provider": "OVH (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2233",
     "ip": "51.77.149.83",
     "provider": "OVH (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   },
   {
     "id": "sl2234",
     "ip": "57.128.237.67",
     "provider": "OVH (OVH)",
     "category": "To Return",
-    "status": "To Return"
+    "status": "Down"
   }
 ]
