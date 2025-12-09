@@ -120,7 +120,7 @@
                 return saved ? JSON.parse(saved) : { token: '', owner: '', repo: '', path: 'servers.json' };
             });
 
-            // --- GITHUB API LOGIC (ROBUST VERSION) ---
+            // --- GITHUB API LOGIC (WITH CACHE BUSTING) ---
             const saveToGitHub = async (newServers) => {
                 if (!ghConfig.token || !ghConfig.owner || !ghConfig.repo) {
                     showToast("Configure GitHub Settings to save!", "error");
@@ -131,13 +131,17 @@
                 try {
                     const apiUrl = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${ghConfig.path}`;
                     
-                    // 1. Get current file info (to get SHA)
-                    // We need the SHA to update an existing file.
-                    const getRes = await fetch(apiUrl, {
+                    // 1. Get current file info (to get SHA) - WITH CACHE BUSTING
+                    // Adding timestamp to URL and cache: no-store header to force fresh read
+                    const getRes = await fetch(`${apiUrl}?t=${new Date().getTime()}`, {
                         headers: {
                             'Authorization': `token ${ghConfig.token}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache',
+                            'Expires': '0'
+                        },
+                        cache: 'no-store'
                     });
 
                     let sha = null;
@@ -146,12 +150,11 @@
                         const fileData = await getRes.json();
                         sha = fileData.sha;
                     } else if (getRes.status === 404) {
-                        // File doesn't exist yet, which is fine. We will create it.
-                        console.log("File not found, creating new one.");
+                        // File really doesn't exist
+                        console.log("File not found on GitHub, will create new.");
                     } else {
-                        // Some other error (Permissions, Rate Limit, etc.)
                         const err = await getRes.json();
-                        throw new Error(`Read Failed: ${err.message}`);
+                        throw new Error(`Read Failed (${getRes.status}): ${err.message}`);
                     }
 
                     // 2. Prepare content
@@ -163,7 +166,6 @@
                         content: content
                     };
                     
-                    // CRITICAL: Only include SHA if we found one.
                     if (sha) {
                         payload.sha = sha;
                     }
@@ -196,15 +198,17 @@
 
             const fetchFromGitHub = async () => {
                 setIsLoading(true);
-                // If config exists, try API fetch
+                // If config exists, try API fetch (Using API is better than raw URL for freshness)
                 if (ghConfig.token && ghConfig.owner && ghConfig.repo) {
                     try {
                         const apiUrl = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${ghConfig.path}`;
-                        const res = await fetch(apiUrl, {
+                        const res = await fetch(`${apiUrl}?t=${new Date().getTime()}`, {
                             headers: {
                                 'Authorization': `token ${ghConfig.token}`,
-                                'Accept': 'application/vnd.github.v3.raw'
-                            }
+                                'Accept': 'application/vnd.github.v3.raw', // Request raw content
+                                'Cache-Control': 'no-cache'
+                            },
+                            cache: 'no-store'
                         });
                         if (res.ok) {
                             const data = await res.json();
@@ -212,7 +216,7 @@
                             setIsLoading(false);
                             return;
                         }
-                    } catch (e) { console.error("API fetch failed, falling back to standard fetch", e); }
+                    } catch (e) { console.error("API fetch failed", e); }
                 }
 
                 // Fallback to standard fetch
@@ -223,9 +227,8 @@
                     setServers(data);
                 } catch (error) {
                     console.error(error);
-                    // If file is missing, we start empty
                     setServers([]);
-                    // Don't show error toast on initial load if file is just missing
+                    showToast('Could not load servers.json', 'error');
                 } finally {
                     setIsLoading(false);
                 }
@@ -409,7 +412,7 @@
                             <div className="flex items-center gap-6">
                                 <div className="flex items-center gap-3">
                                     <div className="bg-gradient-to-tr from-violet-600 to-indigo-600 p-2.5 rounded-lg text-white shadow-sm"><Server size={24} strokeWidth={2.5} /></div>
-                                    <div><h1 className="text-xl font-bold text-slate-900 leading-none tracking-tight">Server Monitor</h1><span className="text-xs font-medium text-slate-400 uppercase tracking-wider">v8.1 &bull; GitHub Sync</span></div>
+                                    <div><h1 className="text-xl font-bold text-slate-900 leading-none tracking-tight">Server Monitor</h1><span className="text-xs font-medium text-slate-400 uppercase tracking-wider">v8.2 &bull; GitHub Sync</span></div>
                                 </div>
                                 <div className="hidden md:flex h-10 w-px bg-slate-200"></div>
                                 <div className="hidden md:flex gap-6 text-sm font-medium">
