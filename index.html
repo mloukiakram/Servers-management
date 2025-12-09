@@ -120,7 +120,7 @@
                 return saved ? JSON.parse(saved) : { token: '', owner: '', repo: '', path: 'servers.json' };
             });
 
-            // --- GITHUB API LOGIC (IMPROVED ERROR HANDLING) ---
+            // --- GITHUB API LOGIC (ROBUST VERSION) ---
             const saveToGitHub = async (newServers) => {
                 if (!ghConfig.token || !ghConfig.owner || !ghConfig.repo) {
                     showToast("Configure GitHub Settings to save!", "error");
@@ -131,7 +131,8 @@
                 try {
                     const apiUrl = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${ghConfig.path}`;
                     
-                    // 1. Get current SHA
+                    // 1. Get current file info (to get SHA)
+                    // We need the SHA to update an existing file.
                     const getRes = await fetch(apiUrl, {
                         headers: {
                             'Authorization': `token ${ghConfig.token}`,
@@ -139,29 +140,42 @@
                         }
                     });
 
-                    if (!getRes.ok) {
+                    let sha = null;
+
+                    if (getRes.ok) {
+                        const fileData = await getRes.json();
+                        sha = fileData.sha;
+                    } else if (getRes.status === 404) {
+                        // File doesn't exist yet, which is fine. We will create it.
+                        console.log("File not found, creating new one.");
+                    } else {
+                        // Some other error (Permissions, Rate Limit, etc.)
                         const err = await getRes.json();
                         throw new Error(`Read Failed: ${err.message}`);
                     }
-                    
-                    const fileData = await getRes.json();
-                    const sha = fileData.sha;
 
                     // 2. Prepare content
                     const content = btoa(unescape(encodeURIComponent(JSON.stringify(newServers, null, 2))));
 
-                    // 3. Push Update
+                    // 3. Construct Payload
+                    const payload = {
+                        message: `Update servers via App (${new Date().toLocaleString()})`,
+                        content: content
+                    };
+                    
+                    // CRITICAL: Only include SHA if we found one.
+                    if (sha) {
+                        payload.sha = sha;
+                    }
+
+                    // 4. Push Update
                     const putRes = await fetch(apiUrl, {
                         method: 'PUT',
                         headers: {
                             'Authorization': `token ${ghConfig.token}`,
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({
-                            message: `Update servers via App (${new Date().toLocaleString()})`,
-                            content: content,
-                            sha: sha
-                        })
+                        body: JSON.stringify(payload)
                     });
 
                     if (!putRes.ok) {
@@ -182,6 +196,7 @@
 
             const fetchFromGitHub = async () => {
                 setIsLoading(true);
+                // If config exists, try API fetch
                 if (ghConfig.token && ghConfig.owner && ghConfig.repo) {
                     try {
                         const apiUrl = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${ghConfig.path}`;
@@ -200,6 +215,7 @@
                     } catch (e) { console.error("API fetch failed, falling back to standard fetch", e); }
                 }
 
+                // Fallback to standard fetch
                 try {
                     const response = await fetch('./servers.json?t=' + new Date().getTime());
                     if (!response.ok) throw new Error('Failed to load DB');
@@ -207,8 +223,9 @@
                     setServers(data);
                 } catch (error) {
                     console.error(error);
+                    // If file is missing, we start empty
                     setServers([]);
-                    showToast('Could not load servers.json', 'error');
+                    // Don't show error toast on initial load if file is just missing
                 } finally {
                     setIsLoading(false);
                 }
@@ -392,7 +409,7 @@
                             <div className="flex items-center gap-6">
                                 <div className="flex items-center gap-3">
                                     <div className="bg-gradient-to-tr from-violet-600 to-indigo-600 p-2.5 rounded-lg text-white shadow-sm"><Server size={24} strokeWidth={2.5} /></div>
-                                    <div><h1 className="text-xl font-bold text-slate-900 leading-none tracking-tight">Server Monitor</h1><span className="text-xs font-medium text-slate-400 uppercase tracking-wider">v8.0 &bull; GitHub Sync</span></div>
+                                    <div><h1 className="text-xl font-bold text-slate-900 leading-none tracking-tight">Server Monitor</h1><span className="text-xs font-medium text-slate-400 uppercase tracking-wider">v8.1 &bull; GitHub Sync</span></div>
                                 </div>
                                 <div className="hidden md:flex h-10 w-px bg-slate-200"></div>
                                 <div className="hidden md:flex gap-6 text-sm font-medium">
