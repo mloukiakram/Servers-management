@@ -123,7 +123,6 @@
 
             // --- GITHUB API LOGIC ---
             
-            // Helper: Get Base URL without parameters
             const getBaseUrl = () => {
                 const cleanPath = ghConfig.path.startsWith('/') ? ghConfig.path.substring(1) : ghConfig.path;
                 return `https://api.github.com/repos/${ghConfig.owner.trim()}/${ghConfig.repo.trim()}/contents/${cleanPath.trim()}`;
@@ -133,11 +132,14 @@
                 setIsTestLoading(true);
                 try {
                     const branch = ghConfig.branch || 'main';
-                    const apiUrl = `${getBaseUrl()}?ref=${branch}&t=${Date.now()}`; // Add branch for READ
+                    // REMOVED 'cache: no-store' to fix CORS
+                    const apiUrl = `${getBaseUrl()}?ref=${branch}&t=${Date.now()}`; 
                     
                     const res = await fetch(apiUrl, {
-                        headers: { 'Authorization': `token ${ghConfig.token.trim()}`, 'Accept': 'application/vnd.github.v3+json' },
-                        cache: 'no-store'
+                        headers: { 
+                            'Authorization': `token ${ghConfig.token.trim()}`, 
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
                     });
 
                     if (res.ok) {
@@ -167,14 +169,14 @@
                     const baseUrl = getBaseUrl();
                     const branch = ghConfig.branch || 'main';
                     
-                    // 1. Get SHA (Must include branch in URL query for GET)
+                    // 1. Get SHA
+                    // REMOVED custom headers causing CORS issues
                     const getUrl = `${baseUrl}?ref=${branch}&t=${Date.now()}`;
                     
                     const getRes = await fetch(getUrl, {
                         headers: {
                             'Authorization': `token ${ghConfig.token.trim()}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Cache-Control': 'no-cache'
+                            'Accept': 'application/vnd.github.v3+json'
                         }
                     });
 
@@ -183,7 +185,6 @@
                         const fileData = await getRes.json();
                         sha = fileData.sha;
                     } else if (getRes.status === 404) {
-                        // File missing is OK for create
                         console.log("File does not exist, creating new.");
                     } else {
                         const err = await getRes.json();
@@ -197,11 +198,11 @@
                     const body = {
                         message: `Update via App (${new Date().toLocaleString()})`,
                         content: content,
-                        branch: branch // Branch goes in BODY for PUT
+                        branch: branch
                     };
                     if (sha) body.sha = sha;
 
-                    // 4. PUT Request (Clean URL, no params)
+                    // 4. PUT Request
                     const putRes = await fetch(baseUrl, {
                         method: 'PUT',
                         headers: {
@@ -234,11 +235,11 @@
                         const branch = ghConfig.branch || 'main';
                         const apiUrl = `${getBaseUrl()}?ref=${branch}&t=${Date.now()}`;
                         
+                        // REMOVED 'cache-control' header
                         const res = await fetch(apiUrl, {
                             headers: {
                                 'Authorization': `token ${ghConfig.token.trim()}`,
-                                'Accept': 'application/vnd.github.v3.raw',
-                                'Cache-Control': 'no-cache'
+                                'Accept': 'application/vnd.github.v3.raw'
                             }
                         });
                         if (res.ok) {
@@ -430,7 +431,7 @@
                     <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 backdrop-blur-sm bg-white/90">
                         <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="flex items-center gap-6">
-                                <div className="flex items-center gap-3"><div className="bg-gradient-to-tr from-violet-600 to-indigo-600 p-2.5 rounded-lg text-white shadow-sm"><Server size={24} strokeWidth={2.5} /></div><div><h1 className="text-xl font-bold text-slate-900 leading-none tracking-tight">Server Monitor</h1><span className="text-xs font-medium text-slate-400 uppercase tracking-wider">v10.0 &bull; GitHub Sync</span></div></div>
+                                <div className="flex items-center gap-3"><div className="bg-gradient-to-tr from-violet-600 to-indigo-600 p-2.5 rounded-lg text-white shadow-sm"><Server size={24} strokeWidth={2.5} /></div><div><h1 className="text-xl font-bold text-slate-900 leading-none tracking-tight">Server Monitor</h1><span className="text-xs font-medium text-slate-400 uppercase tracking-wider">v11.0 &bull; GitHub Sync</span></div></div>
                                 <div className="hidden md:flex h-10 w-px bg-slate-200"></div>
                                 <div className="hidden md:flex gap-6 text-sm font-medium">
                                     <div className="flex flex-col"><span className="text-slate-400 text-xs">Total</span><span className="text-slate-900 text-lg font-bold leading-none">{stats.total}</span></div>
@@ -561,7 +562,6 @@
                         </div>
                     )}
 
-                    {/* SETTINGS MODAL */}
                     {isSettingsOpen && (
                         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-enter" onClick={() => setIsSettingsOpen(false)}>
                             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
