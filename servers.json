@@ -151,7 +151,7 @@
     "ip": "192.99.28.182",
     "provider": "Thomashost (OVH)",
     "category": "Test",
-    "status": "Down"
+    "status": "Active"
   },
   {
     "id": "sl2236",
@@ -207,7 +207,7 @@
     "ip": "45.32.152.122",
     "provider": "Geckohost",
     "category": "Test",
-    "status": "Low Delivery"
+    "status": "Active"
   },
   {
     "id": "sl2181",
@@ -242,7 +242,7 @@
     "ip": "217.182.73.125",
     "provider": "Ovh.pt",
     "category": "Test",
-    "status": "Low Delivery"
+    "status": "Active"
   },
   {
     "id": "sl1538",
@@ -256,7 +256,7 @@
     "ip": "51.15.25.79",
     "provider": "Scaleway",
     "category": "Test",
-    "status": "Low Delivery"
+    "status": "Active"
   },
   {
     "id": "sl1963",
@@ -270,14 +270,14 @@
     "ip": "91.98.192.194",
     "provider": "Hetzner (Webdesignlabs)",
     "category": "Test",
-    "status": "Low Delivery"
+    "status": "Active"
   },
   {
     "id": "sl2160",
     "ip": "46.62.201.227",
     "provider": "Hetzner (Storage-Vps)",
     "category": "Test",
-    "status": "Low Delivery"
+    "status": "Active"
   },
   {
     "id": "sl2079",
