@@ -109,14 +109,14 @@
     "ip": "51.75.40.248",
     "provider": "vertichost (OVH)",
     "category": "Issues",
-    "status": "Timed out"
+    "status": "Timed Out"
   },
   {
     "id": "sl2150",
     "ip": "217.182.73.127",
     "provider": "Ovh.pt (OVH)",
     "category": "Issues",
-    "status": "Timed out"
+    "status": "Timed Out"
   },
   {
     "id": "sl2184",
@@ -130,21 +130,21 @@
     "ip": "146.59.32.47",
     "provider": "OVH.pt (OVH)",
     "category": "Issues",
-    "status": "Timed out"
+    "status": "Timed Out"
   },
   {
     "id": "sl2218",
     "ip": "145.239.92.217",
     "provider": "Ovh.pt (OVH)",
     "category": "Issues",
-    "status": "Timed out"
+    "status": "Timed Out"
   },
   {
     "id": "sl2219",
     "ip": "145.239.87.117",
     "provider": "Ovh.pt (OVH)",
     "category": "Issues",
-    "status": "Timed out"
+    "status": "Timed Out"
   },
   {
     "id": "sl2235",
@@ -158,7 +158,7 @@
     "ip": "54.38.243.111",
     "provider": "Tvmserver (OVH)",
     "category": "Issues",
-    "status": "Timed out"
+    "status": "Timed Out"
   },
   {
     "id": "sl2162",
