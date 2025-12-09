@@ -96,44 +96,67 @@
             // Form Data
             const [formData, setFormData] = useState({ id: '', ip: '', provider: '', category: 'Production', status: 'Active' });
 
-            // --- DATA LOADING LOGIC ---
+            // --- SMART DATA SYNC LOGIC ---
             useEffect(() => {
-                const initData = async () => {
-                    const localData = localStorage.getItem('serverTrackerData');
-                    if (localData) {
-                        setServers(JSON.parse(localData));
+                const syncData = async () => {
+                    setIsLoading(true);
+                    try {
+                        // 1. Fetch the latest "Database" (servers.json)
+                        const response = await fetch('./servers.json');
+                        if (!response.ok) throw new Error('Failed to load DB');
+                        const dbData = await response.json();
+
+                        // 2. Get Local Changes
+                        const localDataString = localStorage.getItem('serverTrackerData');
+                        
+                        if (localDataString) {
+                            const localData = JSON.parse(localDataString);
+                            
+                            // 3. MERGE: Use DB data as the 'Truth' for static fields (IP, Provider)
+                            // but keep Local data for dynamic fields (Category, Status) if they exist.
+                            const mergedData = dbData.map(dbServer => {
+                                const localServer = localData.find(l => l.id === dbServer.id);
+                                if (localServer) {
+                                    return { 
+                                        ...dbServer, // Overwrite local static data with DB data (Fixes missing IPs)
+                                        category: localServer.category, // Preserve local category
+                                        status: localServer.status // Preserve local status
+                                    };
+                                }
+                                return dbServer; // New server in DB? Use DB data.
+                            });
+                            
+                            // 4. Handle locally added servers that aren't in DB yet
+                            const localOnlyServers = localData.filter(l => !dbData.some(d => d.id === l.id));
+                            
+                            setServers([...mergedData, ...localOnlyServers]);
+                            // showToast('Synced: IPs updated from DB');
+                        } else {
+                            setServers(dbData);
+                            // showToast('Loaded from Database');
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        // Fallback to local only if DB fails (e.g. offline)
+                        const localData = localStorage.getItem('serverTrackerData');
+                        if (localData) {
+                            setServers(JSON.parse(localData));
+                            showToast('Offline: Loaded Local Data', 'error');
+                        } else {
+                            setServers([]);
+                        }
+                    } finally {
                         setIsLoading(false);
-                    } else {
-                        await fetchFromDB();
                     }
                 };
-                initData();
+                
+                syncData();
             }, []);
 
-            const fetchFromDB = async () => {
-                setIsLoading(true);
-                try {
-                    // This fetches the servers.json file you created
-                    const response = await fetch('./servers.json');
-                    if (!response.ok) throw new Error('Failed to load DB');
-                    const data = await response.json();
-                    setServers(data);
-                    showToast('Data loaded from database');
-                } catch (error) {
-                    console.error(error);
-                    // Only show error if we have no data at all
-                    if(servers.length === 0) {
-                        setServers([]); // Ensure it doesn't crash
-                    }
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-
             const handleResetFromDB = async () => {
-                if(confirm("This will discard all local changes and pull the latest list from servers.json. Continue?")) {
+                if(confirm("This will discard all local changes and pull everything fresh from servers.json. Continue?")) {
                     localStorage.removeItem('serverTrackerData');
-                    await fetchFromDB();
+                    window.location.reload();
                 }
             };
 
@@ -511,35 +534,35 @@
                     </main>
 
                     {selectedIds.size > 0 && (
-                        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white rounded-xl px-5 py-3 flex items-center justify-between shadow-2xl animate-slide-up z-50 w-auto min-w-[500px]">
-                            <div className="flex items-center gap-4">
-                                <span className="font-bold bg-white/20 px-3 py-1 rounded-lg text-sm">{selectedIds.size} Selected</span>
-                                <button onClick={() => setSelectedIds(new Set())} className="text-indigo-100 hover:text-white text-sm underline opacity-80 hover:opacity-100">Clear</button>
+                        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white rounded-xl px-6 py-4 flex items-center justify-between shadow-2xl animate-slide-up z-50 w-auto min-w-[700px]">
+                            <div className="flex items-center gap-6">
+                                <span className="font-bold bg-white/20 px-4 py-1.5 rounded-lg text-sm">{selectedIds.size} Selected</span>
+                                <button onClick={() => setSelectedIds(new Set())} className="text-indigo-100 hover:text-white text-sm underline opacity-80 hover:opacity-100 font-medium">Clear Selection</button>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-3">
                                 <div className="relative">
-                                    <button onClick={(e) => { e.stopPropagation(); setIsBulkMenuOpen(!isBulkMenuOpen); setIsBulkStatusMenuOpen(false); }} className="flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-3 py-2 rounded-lg text-sm font-medium transition-colors">Move to... <ChevronUp size={14} /></button>
+                                    <button onClick={(e) => { e.stopPropagation(); setIsBulkMenuOpen(!isBulkMenuOpen); setIsBulkStatusMenuOpen(false); }} className="flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors">Move to... <ChevronUp size={16} /></button>
                                     {isBulkMenuOpen && (
-                                        <div className="absolute bottom-full mb-2 w-48 bg-white rounded-lg shadow-xl py-1 text-slate-800 border border-slate-100 z-50 animate-fade-in">
+                                        <div className="absolute bottom-full mb-3 w-56 bg-white rounded-lg shadow-xl py-2 text-slate-800 border border-slate-100 z-50 animate-fade-in">
                                             {CATEGORIES.map(c => (
-                                                <button key={c.key} onClick={() => handleBulkMove(c.key)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-2 transition-colors"><div className={`w-2 h-2 rounded-full bg-${c.color.split('-')[1]}-500`}></div>{c.label}</button>
+                                                <button key={c.key} onClick={() => handleBulkMove(c.key)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-3 transition-colors"><div className={`w-2.5 h-2.5 rounded-full bg-${c.color.split('-')[1]}-500`}></div>{c.label}</button>
                                             ))}
                                         </div>
                                     )}
                                 </div>
                                 <div className="relative">
-                                    <button onClick={(e) => { e.stopPropagation(); setIsBulkStatusMenuOpen(!isBulkStatusMenuOpen); setIsBulkMenuOpen(false); }} className="flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-3 py-2 rounded-lg text-sm font-medium transition-colors">Set Status... <ChevronUp size={14} /></button>
+                                    <button onClick={(e) => { e.stopPropagation(); setIsBulkStatusMenuOpen(!isBulkStatusMenuOpen); setIsBulkMenuOpen(false); }} className="flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors">Set Status... <ChevronUp size={16} /></button>
                                     {isBulkStatusMenuOpen && (
-                                        <div className="absolute bottom-full mb-2 w-48 bg-white rounded-lg shadow-xl py-1 text-slate-800 border border-slate-100 z-50 animate-fade-in">
+                                        <div className="absolute bottom-full mb-3 w-56 bg-white rounded-lg shadow-xl py-2 text-slate-800 border border-slate-100 z-50 animate-fade-in">
                                             {STATUS_OPTIONS.map(status => (
-                                                <button key={status} onClick={() => handleBulkStatus(status)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-2 transition-colors"><span className={`w-2 h-2 rounded-full ${status === 'Active' ? 'bg-emerald-500' : status === 'Down' ? 'bg-rose-500' : 'bg-orange-500'}`}></span>{status}</button>
+                                                <button key={status} onClick={() => handleBulkStatus(status)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-3 transition-colors"><span className={`w-2.5 h-2.5 rounded-full ${status === 'Active' ? 'bg-emerald-500' : status === 'Down' ? 'bg-rose-500' : 'bg-orange-500'}`}></span>{status}</button>
                                             ))}
                                         </div>
                                     )}
                                 </div>
-                                <button onClick={handleCopy} className="flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-3 py-2 rounded-lg text-sm font-medium transition-colors"><Copy size={16} /> Copy</button>
-                                <div className="w-px h-6 bg-indigo-500 mx-1"></div>
-                                <button onClick={handleDelete} className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors"><Trash2 size={16} /></button>
+                                <button onClick={handleCopy} className="flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors"><Copy size={16} /> Copy</button>
+                                <div className="w-px h-8 bg-indigo-500 mx-2"></div>
+                                <button onClick={handleDelete} className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors"><Trash2 size={16} /></button>
                             </div>
                         </div>
                     )}
