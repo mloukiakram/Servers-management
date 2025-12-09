@@ -45,7 +45,7 @@
             Server, Activity, Search, Plus, Trash2, Edit2, 
             ArrowRight, Copy, CheckSquare, Square, X, 
             LayoutGrid, List, Download, ChevronDown, ChevronUp, 
-            Network, Save, Database, RefreshCw, Filter, CheckCircle2, AlertOctagon, Clock, ArrowUpDown, Settings, Loader2, Wifi
+            Network, Save, Database, RefreshCw, Filter, CheckCircle2, AlertOctagon, Clock, ArrowUpDown, Settings, Loader2, Wifi, GitBranch
         } from 'lucide-react';
 
         // --- CONSTANTS ---
@@ -105,12 +105,12 @@
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [isSettingsOpen, setIsSettingsOpen] = useState(false);
             const [editingServer, setEditingServer] = useState(null);
-            
-            // Menus & Notifications
+            const [toast, setToast] = useState(null);
+
+            // UI State
             const [openMenuId, setOpenMenuId] = useState(null); 
             const [isBulkMenuOpen, setIsBulkMenuOpen] = useState(false);
             const [isBulkStatusMenuOpen, setIsBulkStatusMenuOpen] = useState(false);
-            const [toast, setToast] = useState(null);
 
             // Form Data
             const [formData, setFormData] = useState({ id: '', ip: '', provider: '', category: 'Production', status: 'Active' });
@@ -118,44 +118,36 @@
             // GitHub Config
             const [ghConfig, setGhConfig] = useState(() => {
                 const saved = localStorage.getItem('ghConfig');
-                return saved ? JSON.parse(saved) : { token: '', owner: '', repo: '', path: 'servers.json' };
+                return saved ? JSON.parse(saved) : { token: '', owner: '', repo: '', branch: 'main', path: 'servers.json' };
             });
 
             // --- GITHUB API LOGIC ---
             const getApiUrl = (config) => {
-                // Ensure no leading slash in path
                 const cleanPath = config.path.startsWith('/') ? config.path.substring(1) : config.path;
-                return `https://api.github.com/repos/${config.owner.trim()}/${config.repo.trim()}/contents/${cleanPath.trim()}`;
+                // Add ref query param for branch support
+                return `https://api.github.com/repos/${config.owner.trim()}/${config.repo.trim()}/contents/${cleanPath.trim()}?ref=${config.branch || 'main'}`;
             };
 
             const testConnection = async () => {
                 setIsTestLoading(true);
                 try {
                     const apiUrl = getApiUrl(ghConfig);
-                    console.log("Testing connection to:", apiUrl);
-                    
                     const res = await fetch(apiUrl, {
                         headers: { 'Authorization': `token ${ghConfig.token.trim()}`, 'Accept': 'application/vnd.github.v3+json' },
                         cache: 'no-store'
                     });
 
                     if (res.ok) {
-                        showToast("Connection Successful! Found file.");
+                        showToast("Success! Found servers.json");
                     } else if (res.status === 404) {
-                        showToast("Connected to Repo, but 'servers.json' not found. It will be created on save.", "success");
-                    } else if (res.status === 401) {
-                        showToast("Unauthorized. Check your Token.", "error");
+                        showToast("Connected to Repo. File not found (will be created).", "success");
                     } else {
                         const err = await res.json();
-                        showToast(`Error: ${err.message}`, "error");
+                        showToast(`Error (${res.status}): ${err.message}`, "error");
                     }
                 } catch (error) {
                     console.error(error);
-                    if (window.location.protocol === 'file:') {
-                        showToast("Cannot test from local file. Upload to GitHub Pages.", "error");
-                    } else {
-                        showToast("Network Error: Failed to fetch.", "error");
-                    }
+                    showToast("Network Error. Check console.", "error");
                 } finally {
                     setIsTestLoading(false);
                 }
@@ -163,7 +155,7 @@
 
             const saveToGitHub = async (newServers) => {
                 if (!ghConfig.token || !ghConfig.owner || !ghConfig.repo) {
-                    showToast("Configure GitHub Settings to save!", "error");
+                    showToast("Configure GitHub Settings first!", "error");
                     return false;
                 }
 
@@ -172,33 +164,36 @@
                     const apiUrl = getApiUrl(ghConfig);
                     
                     // 1. Get SHA
-                    const getRes = await fetch(`${apiUrl}?t=${new Date().getTime()}`, {
+                    const getRes = await fetch(`${apiUrl}&t=${new Date().getTime()}`, {
                         headers: {
                             'Authorization': `token ${ghConfig.token.trim()}`,
                             'Accept': 'application/vnd.github.v3+json',
                             'Cache-Control': 'no-cache'
-                        },
-                        cache: 'no-store'
+                        }
                     });
 
                     let sha = null;
                     if (getRes.ok) {
                         const fileData = await getRes.json();
                         sha = fileData.sha;
-                    } else if (getRes.status !== 404) {
+                    } else if (getRes.status === 404) {
+                        // File missing is OK for create
+                    } else {
                         const err = await getRes.json();
-                        throw new Error(`Read Error: ${err.message}`);
+                        throw new Error(`Read Failed: ${err.message}`);
                     }
 
                     // 2. Write
                     const content = btoa(unescape(encodeURIComponent(JSON.stringify(newServers, null, 2))));
                     const payload = {
-                        message: `Update servers via App (${new Date().toLocaleString()})`,
-                        content: content
+                        message: `Update via App (${new Date().toLocaleString()})`,
+                        content: content,
+                        branch: ghConfig.branch || 'main'
                     };
                     if (sha) payload.sha = sha;
 
-                    const putRes = await fetch(apiUrl, {
+                    const putRes = await fetch(apiUrl, { // PUT url shouldn't have query params usually, but GitHub ignores extra ones or we strip them
+                        url: `https://api.github.com/repos/${ghConfig.owner.trim()}/${ghConfig.repo.trim()}/contents/${ghConfig.path}`,
                         method: 'PUT',
                         headers: {
                             'Authorization': `token ${ghConfig.token.trim()}`,
@@ -209,14 +204,18 @@
 
                     if (!putRes.ok) {
                         const err = await putRes.json();
-                        throw new Error(`Write Error: ${err.message}`);
+                        // Catch the specific case of file existing but we missed it
+                        if (putRes.status === 409 || putRes.status === 422) {
+                            throw new Error("Conflict: GitHub says file exists but App didn't see it. Check Repo Name capitalization.");
+                        }
+                        throw new Error(`Write Failed: ${err.message}`);
                     }
                     
-                    showToast("Synced to GitHub!");
+                    showToast("Saved to GitHub!");
                     return true;
                 } catch (error) {
                     console.error(error);
-                    showToast(`${error.message}`, 'error');
+                    showToast(error.message, 'error');
                     return false;
                 } finally {
                     setIsSaving(false);
@@ -225,17 +224,15 @@
 
             const fetchFromGitHub = async () => {
                 setIsLoading(true);
-                // API Fetch Strategy
                 if (ghConfig.token && ghConfig.owner && ghConfig.repo) {
                     try {
                         const apiUrl = getApiUrl(ghConfig);
-                        const res = await fetch(`${apiUrl}?t=${new Date().getTime()}`, {
+                        const res = await fetch(`${apiUrl}&t=${new Date().getTime()}`, {
                             headers: {
                                 'Authorization': `token ${ghConfig.token.trim()}`,
                                 'Accept': 'application/vnd.github.v3.raw',
                                 'Cache-Control': 'no-cache'
-                            },
-                            cache: 'no-store'
+                            }
                         });
                         if (res.ok) {
                             const data = await res.json();
@@ -246,7 +243,7 @@
                     } catch (e) { console.error("API fetch failed", e); }
                 }
 
-                // Fallback Strategy
+                // Fallback
                 try {
                     const response = await fetch('./servers.json?t=' + new Date().getTime());
                     if (!response.ok) throw new Error('Failed to load DB');
@@ -254,28 +251,22 @@
                     setServers(data);
                 } catch (error) {
                     console.error(error);
-                    setServers([]);
-                    // Silent fail on init is okay, assumes empty DB
+                    setServers([]); 
                 } finally {
                     setIsLoading(false);
                 }
             };
 
-            // Initial Load
             useEffect(() => { fetchFromGitHub(); }, []);
-
-            // Persistence
             useEffect(() => localStorage.setItem('serverViewMode', viewMode), [viewMode]);
             useEffect(() => localStorage.setItem('ghConfig', JSON.stringify(ghConfig)), [ghConfig]);
 
-            // Click outside handler
             useEffect(() => {
                 const closeMenus = () => { setOpenMenuId(null); setIsBulkMenuOpen(false); setIsBulkStatusMenuOpen(false); };
                 document.addEventListener('click', closeMenus);
                 return () => document.removeEventListener('click', closeMenus);
             }, []);
 
-            // Toast Timer
             useEffect(() => {
                 if (toast) {
                     const timer = setTimeout(() => setToast(null), 3000);
@@ -432,7 +423,7 @@
                     <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 backdrop-blur-sm bg-white/90">
                         <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="flex items-center gap-6">
-                                <div className="flex items-center gap-3"><div className="bg-gradient-to-tr from-violet-600 to-indigo-600 p-2.5 rounded-lg text-white shadow-sm"><Server size={24} strokeWidth={2.5} /></div><div><h1 className="text-xl font-bold text-slate-900 leading-none tracking-tight">Server Monitor</h1><span className="text-xs font-medium text-slate-400 uppercase tracking-wider">v8.3 &bull; GitHub Sync</span></div></div>
+                                <div className="flex items-center gap-3"><div className="bg-gradient-to-tr from-violet-600 to-indigo-600 p-2.5 rounded-lg text-white shadow-sm"><Server size={24} strokeWidth={2.5} /></div><div><h1 className="text-xl font-bold text-slate-900 leading-none tracking-tight">Server Monitor</h1><span className="text-xs font-medium text-slate-400 uppercase tracking-wider">v9.0 &bull; GitHub Sync</span></div></div>
                                 <div className="hidden md:flex h-10 w-px bg-slate-200"></div>
                                 <div className="hidden md:flex gap-6 text-sm font-medium">
                                     <div className="flex flex-col"><span className="text-slate-400 text-xs">Total</span><span className="text-slate-900 text-lg font-bold leading-none">{stats.total}</span></div>
@@ -468,6 +459,7 @@
                     {isSaving && <div className="fixed top-0 left-0 w-full h-1 bg-slate-100 z-50"><div className="h-full bg-violet-600 animate-pulse w-full"></div></div>}
 
                     <main className="flex-1 overflow-y-auto custom-scroll p-6 pb-32">
+                        {/* List/Grid Views Here (Same as before) */}
                         <div className="flex items-center justify-between mb-4">
                             <button onClick={toggleAllInView} className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-violet-600 transition-colors bg-white px-4 py-2 rounded-md border border-slate-200 shadow-sm">
                                 {filteredServers.length > 0 && filteredServers.every(s => selectedIds.has(s.id)) ? <CheckSquare size={18} className="text-violet-600" /> : <Square size={18} />} Select All {filteredServers.length > 0 ? `(${filteredServers.length})` : ''}
@@ -510,7 +502,6 @@
                                                 </tr>
                                             );
                                         })}
-                                        {filteredServers.length === 0 && <tr><td colSpan="7" className="text-center py-20 text-slate-400">No servers found.</td></tr>}
                                     </tbody>
                                 </table>
                             </div>
@@ -563,6 +554,27 @@
                         </div>
                     )}
 
+                    {/* SETTINGS MODAL */}
+                    {isSettingsOpen && (
+                        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-enter" onClick={() => setIsSettingsOpen(false)}>
+                            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                                <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50"><h3 className="font-bold text-lg text-slate-800 flex items-center gap-2"><Settings size={20} /> GitHub Settings</h3><button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={24} /></button></div>
+                                <div className="p-6 space-y-6">
+                                    <div className="space-y-4">
+                                        <div className="space-y-2"><label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Owner (Username)</label><input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-base focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none" value={ghConfig.owner} onChange={e => setGhConfig({...ghConfig, owner: e.target.value.trim()})} placeholder="e.g. yourusername" /></div>
+                                        <div className="space-y-2"><label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Repository</label><input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-base focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none" value={ghConfig.repo} onChange={e => setGhConfig({...ghConfig, repo: e.target.value.trim()})} placeholder="e.g. server-tracker" /></div>
+                                        <div className="space-y-2"><label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Branch</label><input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-base focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none" value={ghConfig.branch} onChange={e => setGhConfig({...ghConfig, branch: e.target.value.trim()})} placeholder="e.g. main" /></div>
+                                        <div className="space-y-2"><label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Personal Access Token</label><input type="password" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-base focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none" value={ghConfig.token} onChange={e => setGhConfig({...ghConfig, token: e.target.value.trim()})} placeholder="ghp_..." /></div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={testConnection} disabled={isTestLoading} className="px-4 py-2.5 text-base font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all flex items-center justify-center gap-2">{isTestLoading ? <Loader2 className="animate-spin" size={18} /> : <Wifi size={18} />} Test</button>
+                                        <button onClick={() => { localStorage.setItem('ghConfig', JSON.stringify(ghConfig)); setIsSettingsOpen(false); fetchFromGitHub(); showToast("Settings Saved & Reloading..."); }} className="flex-1 px-4 py-2.5 text-base font-bold text-white bg-violet-600 hover:bg-violet-700 rounded-lg shadow-lg shadow-violet-200 transition-all">Save & Sync</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {isModalOpen && (
                         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-enter" onClick={() => setIsModalOpen(false)}>
                             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
@@ -579,26 +591,6 @@
                                     </div>
                                     <div className="pt-4 flex justify-end gap-3"><button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button><button type="submit" className="px-7 py-2.5 text-base font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-lg shadow-slate-200 transition-all hover:translate-y-px active:translate-y-0">{editingServer ? 'Save Changes' : 'Create Server'}</button></div>
                                 </form>
-                            </div>
-                        </div>
-                    )}
-
-                    {isSettingsOpen && (
-                        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-enter" onClick={() => setIsSettingsOpen(false)}>
-                            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                                <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50"><h3 className="font-bold text-lg text-slate-800 flex items-center gap-2"><Settings size={20} /> GitHub Settings</h3><button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={24} /></button></div>
-                                <div className="p-6 space-y-6">
-                                    <p className="text-sm text-slate-600">Enter your repository details to enable instant sync. Changes will be pushed directly to <code>servers.json</code>.</p>
-                                    <div className="space-y-4">
-                                        <div className="space-y-2"><label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Owner (Username)</label><input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-base focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none" value={ghConfig.owner} onChange={e => setGhConfig({...ghConfig, owner: e.target.value.trim()})} placeholder="e.g. yourusername" /></div>
-                                        <div className="space-y-2"><label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Repository</label><input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-base focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none" value={ghConfig.repo} onChange={e => setGhConfig({...ghConfig, repo: e.target.value.trim()})} placeholder="e.g. server-tracker" /></div>
-                                        <div className="space-y-2"><label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Personal Access Token</label><input type="password" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-base focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none" value={ghConfig.token} onChange={e => setGhConfig({...ghConfig, token: e.target.value.trim()})} placeholder="ghp_..." /></div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button onClick={testConnection} disabled={isTestLoading} className="px-4 py-2.5 text-base font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all flex items-center justify-center gap-2">{isTestLoading ? <Loader2 className="animate-spin" size={18} /> : <Wifi size={18} />} Test</button>
-                                        <button onClick={() => { localStorage.setItem('ghConfig', JSON.stringify(ghConfig)); setIsSettingsOpen(false); fetchFromGitHub(); showToast("Settings Saved & Reloading..."); }} className="flex-1 px-4 py-2.5 text-base font-bold text-white bg-violet-600 hover:bg-violet-700 rounded-lg shadow-lg shadow-violet-200 transition-all">Save & Sync</button>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     )}
