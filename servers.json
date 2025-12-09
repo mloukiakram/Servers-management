@@ -383,5 +383,12 @@
     "provider": "OVH (OVH)",
     "category": "To Return",
     "status": "Down"
+  },
+  {
+    "id": "sl2237",
+    "ip": "15.204.155.171",
+    "provider": "imageleet (OVH)",
+    "category": "New",
+    "status": "Active"
   }
 ]
