@@ -3,8 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Tracker</title>
+    <title>Server Monitor</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Modern Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <script type="importmap">
     {
         "imports": {
@@ -16,62 +22,72 @@
     </script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        .animate-fade-in { animation: fadeIn 0.2s ease-out; }
-        .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
-        .custom-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .animate-enter { animation: enter 0.3s ease-out; }
+        .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes enter { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 40px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+        /* Scrollbars */
+        .custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 h-screen overflow-hidden flex flex-col">
+<body class="bg-slate-50/50 text-slate-800 h-screen overflow-hidden flex flex-col selection:bg-violet-100 selection:text-violet-900">
     <div id="root" class="h-full flex flex-col"></div>
 
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useMemo } from 'react';
         import { createRoot } from 'react-dom/client';
         import { 
-            Server, AlertCircle, CheckCircle, Activity, Search, Plus, Trash2, Edit2, 
-            ArrowRight, RotateCcw, AlertTriangle, Copy, CheckSquare, Square, X, 
-            LayoutGrid, List, Download, ChevronDown, ChevronUp, Beaker, Sparkles, Network, RefreshCw
+            Server, Activity, Search, Plus, Trash2, Edit2, 
+            ArrowRight, Copy, CheckSquare, Square, X, 
+            LayoutGrid, List, Download, ChevronDown, ChevronUp, 
+            Network, Save, Database, RefreshCw, Filter, CheckCircle2, AlertOctagon, Clock
         } from 'lucide-react';
 
         // --- UTILS ---
         const copyToClipboard = (text) => {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            textArea.style.position = "fixed";
-            textArea.style.left = "-9999px";
-            document.body.appendChild(textArea);
-            textArea.select();
-            try { document.execCommand('copy'); return true; } 
-            catch (err) { return false; } 
-            finally { document.body.removeChild(textArea); }
+            if (!navigator.clipboard) {
+                // Fallback
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-9999px";
+                document.body.appendChild(textArea);
+                textArea.select();
+                try { document.execCommand('copy'); return true; } 
+                catch (err) { return false; } 
+                finally { document.body.removeChild(textArea); }
+            }
+            return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
         };
 
-        const downloadCSV = (data) => {
-            const headers = ['Server ID', 'IP Address', 'Provider', 'Category', 'Status'];
-            const rows = data.map(s => [s.id, s.ip || '', s.provider, s.category, s.status]);
-            const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const downloadJSON = (data) => {
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "server_data.csv";
+            link.download = "servers.json";
             link.click();
         };
 
         const CATEGORIES = [
-            { key: 'Production', label: 'Production', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', icon: CheckCircle },
-            { key: 'Issues', label: 'Issues', color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200', icon: AlertCircle },
-            { key: 'Others', label: 'Others', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', icon: Server },
-            { key: 'Low Delivery', label: 'Low Delivery', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', icon: AlertTriangle },
-            { key: 'To Return', label: 'To Return', color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', icon: RotateCcw },
-            { key: 'Test', label: 'Test', color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200', icon: Beaker },
-            { key: 'New', label: 'New', color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-200', icon: Sparkles },
+            { key: 'Production', label: 'Production', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+            { key: 'Issues', label: 'Issues', color: 'text-rose-700 bg-rose-50 border-rose-200' },
+            { key: 'Others', label: 'Others', color: 'text-blue-700 bg-blue-50 border-blue-200' },
+            { key: 'Low Delivery', label: 'Low Delivery', color: 'text-amber-700 bg-amber-50 border-amber-200' },
+            { key: 'To Return', label: 'To Return', color: 'text-slate-600 bg-slate-100 border-slate-200' },
+            { key: 'Test', label: 'Test', color: 'text-violet-700 bg-violet-50 border-violet-200' },
+            { key: 'New', label: 'New', color: 'text-cyan-700 bg-cyan-50 border-cyan-200' },
         ];
         
         const STATUS_OPTIONS = ["Active", "Down", "Timed Out"];
@@ -83,7 +99,7 @@
             const [selectedIds, setSelectedIds] = useState(new Set());
             const [searchQuery, setSearchQuery] = useState('');
             const [activeTab, setActiveTab] = useState('ALL');
-            const [viewMode, setViewMode] = useState(() => localStorage.getItem('serverViewMode') || 'list');
+            const [viewMode, setViewMode] = useState('list');
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [editingServer, setEditingServer] = useState(null);
             const [toast, setToast] = useState(null);
@@ -96,86 +112,25 @@
             // Form Data
             const [formData, setFormData] = useState({ id: '', ip: '', provider: '', category: 'Production', status: 'Active' });
 
-            // --- SMART DATA SYNC LOGIC ---
+            // --- DATA LOADING (NO LOCAL STORAGE) ---
             useEffect(() => {
-                const syncData = async () => {
+                const fetchData = async () => {
                     setIsLoading(true);
                     try {
-                        // 1. Fetch the latest "Database" (servers.json)
                         const response = await fetch('./servers.json');
                         if (!response.ok) throw new Error('Failed to load DB');
-                        const dbData = await response.json();
-
-                        // 2. Get Local Changes
-                        const localDataString = localStorage.getItem('serverTrackerData');
-                        
-                        if (localDataString) {
-                            const localData = JSON.parse(localDataString);
-                            
-                            // 3. MERGE: Use DB data as the 'Truth' for static fields (IP, Provider)
-                            // but keep Local data for dynamic fields (Category, Status) if they exist.
-                            const mergedData = dbData.map(dbServer => {
-                                const localServer = localData.find(l => l.id === dbServer.id);
-                                if (localServer) {
-                                    return { 
-                                        ...dbServer, // Overwrite local static data with DB data (Fixes missing IPs)
-                                        category: localServer.category, // Preserve local category
-                                        status: localServer.status // Preserve local status
-                                    };
-                                }
-                                return dbServer; // New server in DB? Use DB data.
-                            });
-                            
-                            // 4. Handle locally added servers that aren't in DB yet
-                            const localOnlyServers = localData.filter(l => !dbData.some(d => d.id === l.id));
-                            
-                            setServers([...mergedData, ...localOnlyServers]);
-                            // showToast('Synced: IPs updated from DB');
-                        } else {
-                            setServers(dbData);
-                            // showToast('Loaded from Database');
-                        }
+                        const data = await response.json();
+                        setServers(data);
                     } catch (error) {
-                        console.error(error);
-                        // Fallback to local only if DB fails (e.g. offline)
-                        const localData = localStorage.getItem('serverTrackerData');
-                        if (localData) {
-                            setServers(JSON.parse(localData));
-                            showToast('Offline: Loaded Local Data', 'error');
-                        } else {
-                            setServers([]);
-                        }
+                        console.error("Could not load servers.json, initializing empty or default.");
+                        setServers([]); 
+                        showToast('Could not load servers.json', 'error');
                     } finally {
                         setIsLoading(false);
                     }
                 };
-                
-                syncData();
+                fetchData();
             }, []);
-
-            const handleResetFromDB = async () => {
-                if(confirm("This will discard all local changes and pull everything fresh from servers.json. Continue?")) {
-                    localStorage.removeItem('serverTrackerData');
-                    window.location.reload();
-                }
-            };
-
-            // Save to local storage on change
-            useEffect(() => {
-                if (!isLoading && servers.length > 0) {
-                    localStorage.setItem('serverTrackerData', JSON.stringify(servers));
-                }
-            }, [servers, isLoading]);
-
-            useEffect(() => localStorage.setItem('serverViewMode', viewMode), [viewMode]);
-            
-            // Toast timer
-            useEffect(() => {
-                if (toast) {
-                    const timer = setTimeout(() => setToast(null), 2500);
-                    return () => clearTimeout(timer);
-                }
-            }, [toast]);
 
             // Click outside handler
             useEffect(() => {
@@ -188,13 +143,20 @@
                 return () => document.removeEventListener('click', closeMenus);
             }, []);
 
-            // Filtering Logic
+            // Toast Timer
+            useEffect(() => {
+                if (toast) {
+                    const timer = setTimeout(() => setToast(null), 3000);
+                    return () => clearTimeout(timer);
+                }
+            }, [toast]);
+
+            // Filtering
             const filteredServers = useMemo(() => {
                 let data = servers;
                 if (activeTab !== 'ALL') {
                     data = data.filter(s => s.category === activeTab);
                 }
-                
                 if (searchQuery.trim()) {
                     const terms = searchQuery.toLowerCase().split(/[\s,]+/).filter(t => t.length > 0);
                     if (terms.length > 0) {
@@ -209,12 +171,10 @@
                 return data;
             }, [servers, activeTab, searchQuery]);
 
-            // Utils
-            const showToast = (message, type = 'success') => {
-                setToast({ message, type });
-            };
+            // --- ACTIONS ---
 
-            // Handlers
+            const showToast = (message, type = 'success') => setToast({ message, type });
+
             const handleSelection = (id) => {
                 const newSet = new Set(selectedIds);
                 newSet.has(id) ? newSet.delete(id) : newSet.add(id);
@@ -225,7 +185,6 @@
                 const allIds = filteredServers.map(s => s.id);
                 const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.has(id));
                 const newSet = new Set(selectedIds);
-                
                 if (allSelected) {
                     allIds.forEach(id => newSet.delete(id));
                 } else {
@@ -249,7 +208,7 @@
 
             const handleBulkStatus = (status) => {
                 setServers(prev => prev.map(s => selectedIds.has(s.id) ? {...s, status: status} : s));
-                showToast(`Status updated for ${selectedIds.size} servers`);
+                showToast(`Set status to ${status}`);
                 setSelectedIds(new Set());
                 setIsBulkStatusMenuOpen(false);
             };
@@ -258,40 +217,33 @@
                 e.preventDefault();
                 if (editingServer) {
                     setServers(prev => prev.map(s => s.id === editingServer.id ? formData : s));
-                    showToast("Server updated");
+                    showToast("Updated successfully");
                 } else {
                     if (servers.find(s => s.id === formData.id)) {
-                        showToast("Server ID already exists", 'error');
+                        showToast("ID already exists", 'error');
                         return;
                     }
                     setServers(prev => [...prev, formData]);
-                    showToast("New server added");
+                    showToast("Server added");
                 }
                 setIsModalOpen(false);
             };
 
             const handleDelete = () => {
-                if(!confirm(`Delete ${selectedIds.size} items?`)) return;
+                if(!confirm(`Permanently remove ${selectedIds.size} servers?`)) return;
                 setServers(prev => prev.filter(s => !selectedIds.has(s.id)));
-                showToast(`Deleted ${selectedIds.size} servers`);
+                showToast("Servers removed");
                 setSelectedIds(new Set());
             };
             
-            const handleCopy = () => {
-                const text = servers.filter(s => selectedIds.has(s.id)).map(s => s.id).join('\n');
-                const success = copyToClipboard(text);
-                if(success) {
-                    showToast(`Copied ${selectedIds.size} names`);
-                    setSelectedIds(new Set());
-                } else {
-                    showToast('Failed to copy', 'error');
-                }
-            }
+            const handleCopy = (text, label = "text") => {
+                copyToClipboard(text).then(() => showToast(`Copied ${label}`));
+            };
 
-            const handleSingleCopy = (id) => {
-                if(copyToClipboard(id)) {
-                    showToast(`Copied ${id}`);
-                }
+            const handleBulkCopy = () => {
+                const text = servers.filter(s => selectedIds.has(s.id)).map(s => s.id).join('\n');
+                handleCopy(text, `${selectedIds.size} IDs`);
+                setSelectedIds(new Set());
             };
 
             const openModal = (s = null) => {
@@ -300,227 +252,299 @@
                 setIsModalOpen(true);
             };
 
+            // --- COMPONENTS ---
+
+            const StatusBadge = ({ status }) => {
+                let styles = "bg-slate-100 text-slate-600 border-slate-200";
+                let Icon = Activity;
+                
+                if (status === 'Active') { styles = "bg-emerald-50 text-emerald-700 border-emerald-200"; Icon = CheckCircle2; }
+                else if (status === 'Down') { styles = "bg-rose-50 text-rose-700 border-rose-200"; Icon = AlertOctagon; }
+                else if (status === 'Timed Out') { styles = "bg-orange-50 text-orange-700 border-orange-200"; Icon = Clock; }
+
+                return (
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${styles}`}>
+                        <Icon size={12} strokeWidth={2.5} />
+                        {status}
+                    </span>
+                );
+            };
+
+            const CategoryBadge = ({ cat }) => {
+                const c = CATEGORIES.find(c => c.key === cat) || CATEGORIES[4];
+                // Extract bg color for the dot
+                const dotColor = c.color.split(' ').find(cls => cls.startsWith('text-')).replace('text-', 'bg-');
+                
+                return (
+                    <span className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-xs font-medium border ${c.color}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
+                        {c.label}
+                    </span>
+                );
+            };
+
             const stats = useMemo(() => ({
                 total: servers.length,
                 issues: servers.filter(s => s.category === 'Issues').length,
                 prod: servers.filter(s => s.category === 'Production').length
             }), [servers]);
 
-            const StatusBadge = ({ status, category }) => {
-                const colorClass = 
-                    status === 'Down' || category === 'Issues' ? 'bg-rose-100 text-rose-700' :
-                    status === 'Timed Out' ? 'bg-orange-100 text-orange-700' :
-                    category === 'Low Delivery' ? 'bg-amber-100 text-amber-700' :
-                    status === 'Active' || category === 'Production' ? 'bg-emerald-100 text-emerald-700' :
-                    'bg-slate-100 text-slate-600';
-                return <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide ${colorClass}`}>{status}</span>;
-            };
-
-            const CatBadge = ({ cat }) => {
-                const c = CATEGORIES.find(c => c.key === cat) || CATEGORIES[4];
-                return (
-                    <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border ${c.bg} ${c.color} ${c.border}`}>
-                        <div className={`w-1.5 h-1.5 rounded-full bg-current`} />
-                        {c.label}
-                    </span>
-                );
-            };
-
-            if (isLoading) return <div className="h-screen flex items-center justify-center text-slate-500">Loading...</div>;
+            if (isLoading) return (
+                <div className="h-screen flex items-center justify-center bg-white">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600"></div>
+                        <p className="text-slate-400 text-sm font-medium">Loading Database...</p>
+                    </div>
+                </div>
+            );
 
             return (
-                <div className="flex flex-col h-full bg-slate-50 relative">
+                <div className="flex flex-col h-full relative">
                     
+                    {/* TOAST */}
                     {toast && (
-                        <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-xl text-white font-medium text-sm z-50 animate-fade-in flex items-center gap-2 ${toast.type === 'error' ? 'bg-rose-600' : 'bg-slate-900'}`}>
-                            {toast.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle size={16} />}
-                            {toast.message}
+                        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-enter">
+                            <div className={`flex items-center gap-3 px-4 py-2.5 rounded-lg shadow-xl border ${toast.type === 'error' ? 'bg-white border-rose-100 text-rose-600' : 'bg-slate-900 border-slate-800 text-white'}`}>
+                                {toast.type === 'error' ? <AlertOctagon size={18} /> : <CheckCircle2 size={18} />}
+                                <span className="text-sm font-medium">{toast.message}</span>
+                            </div>
                         </div>
                     )}
 
-                    <header className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between shrink-0 gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="bg-indigo-600 p-2.5 rounded-xl text-white shadow-sm shadow-indigo-200"><Activity size={24} /></div>
-                            <div>
-                                <h1 className="text-xl font-bold text-slate-900 leading-tight">Server Tracker</h1>
-                                <div className="flex gap-3 text-xs font-medium text-slate-500 mt-0.5">
-                                    <span>{stats.total} Total</span>
-                                    <span className="text-emerald-600">{stats.prod} Active</span>
-                                    <span className="text-rose-600">{stats.issues} Issues</span>
+                    {/* HEADER */}
+                    <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 backdrop-blur-sm bg-white/90">
+                        <div className="px-6 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            
+                            {/* Logo & Stats */}
+                            <div className="flex items-center gap-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-gradient-to-tr from-violet-600 to-indigo-600 p-2 rounded-lg text-white shadow-sm">
+                                        <Server size={20} strokeWidth={2.5} />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-lg font-bold text-slate-900 leading-none tracking-tight">Server Monitor</h1>
+                                        <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">v7.0 &bull; JSON Mode</span>
+                                    </div>
                                 </div>
+                                <div className="hidden md:flex h-8 w-px bg-slate-200"></div>
+                                <div className="hidden md:flex gap-4 text-xs font-medium">
+                                    <div className="flex flex-col">
+                                        <span className="text-slate-400">Total</span>
+                                        <span className="text-slate-900 text-base font-bold leading-none">{stats.total}</span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-emerald-600/80">Production</span>
+                                        <span className="text-emerald-600 text-base font-bold leading-none">{stats.prod}</span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-rose-600/80">Issues</span>
+                                        <span className="text-rose-600 text-base font-bold leading-none">{stats.issues}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <div className="relative flex-1 md:w-72 group">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-500 transition-colors" size={16} />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search IDs, IPs..." 
+                                        value={searchQuery}
+                                        onChange={e => setSearchQuery(e.target.value)}
+                                        className="pl-9 pr-8 h-10 w-full bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all placeholder:text-slate-400"
+                                    />
+                                    {searchQuery && (
+                                        <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                            <X size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                                
+                                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                                    <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}><List size={18} /></button>
+                                    <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid size={18} /></button>
+                                </div>
+
+                                <button onClick={() => downloadJSON(servers)} className="h-10 px-4 flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-violet-700 font-medium text-sm rounded-lg transition-colors shadow-sm" title="Download updated servers.json">
+                                    <Database size={16} /> <span className="hidden lg:inline">Download DB</span>
+                                </button>
+                                
+                                <button onClick={() => openModal()} className="h-10 px-4 flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-lg transition-all shadow-md hover:shadow-lg active:scale-95">
+                                    <Plus size={16} /> <span>Add</span>
+                                </button>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3 w-full md:w-auto">
-                            <div className="relative flex-1 md:w-80 group">
-                                <Search className="absolute left-3 top-3 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
-                                <textarea 
-                                    placeholder="Search IDs or IPs..." 
-                                    value={searchQuery}
-                                    onChange={e => setSearchQuery(e.target.value)}
-                                    className="pl-10 pr-8 py-2.5 border border-slate-200 rounded-xl text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm resize-none h-10 md:h-11 overflow-hidden whitespace-nowrap no-scrollbar"
-                                    rows={1}
-                                />
-                                {searchQuery && (
+                        {/* Filter Tabs */}
+                        <div className="px-6 pb-0 flex gap-2 overflow-x-auto hide-scroll border-t border-slate-100 pt-2">
+                            <button 
+                                onClick={() => setActiveTab('ALL')}
+                                className={`px-4 py-2 text-xs font-semibold rounded-full border transition-all whitespace-nowrap mb-2 ${activeTab === 'ALL' ? 'bg-slate-800 text-white border-slate-800 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
+                            >
+                                All Servers
+                            </button>
+                            {CATEGORIES.map(cat => {
+                                const count = servers.filter(s => s.category === cat.key).length;
+                                const isActive = activeTab === cat.key;
+                                return (
                                     <button 
-                                        onClick={() => setSearchQuery('')}
-                                        className="absolute right-2 top-3 text-slate-400 hover:text-slate-600"
+                                        key={cat.key} 
+                                        onClick={() => setActiveTab(cat.key)}
+                                        className={`px-3 py-2 text-xs font-semibold rounded-full border transition-all whitespace-nowrap mb-2 flex items-center gap-2 ${isActive ? 'bg-white border-violet-200 text-violet-700 ring-2 ring-violet-500/10 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                                     >
-                                        <X size={16} />
+                                        {cat.label}
+                                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-500'}`}>{count}</span>
                                     </button>
-                                )}
-                            </div>
-                            
-                            <button onClick={handleResetFromDB} className="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-100" title="Reset Data from DB">
-                                <RefreshCw size={20} />
-                            </button>
-                            <button onClick={() => downloadCSV(servers)} className="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-100" title="Export CSV">
-                                <Download size={20} />
-                            </button>
-                            <button onClick={() => openModal()} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm hover:shadow-md hover:translate-y-px active:translate-y-0">
-                                <Plus size={18} /> <span className="hidden sm:inline">Add Server</span>
-                            </button>
+                                )
+                            })}
                         </div>
                     </header>
 
-                    {/* Toolbar */}
-                    <div className="bg-white border-b border-slate-200 px-6 pt-1 shrink-0 flex flex-col gap-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex gap-1 overflow-x-auto pb-0 hide-scroll">
-                                <button 
-                                    onClick={() => setActiveTab('ALL')}
-                                    className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'ALL' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-                                >
-                                    All Servers <span className="ml-1 bg-slate-100 px-1.5 py-0.5 rounded-full text-xs text-slate-600">{servers.length}</span>
-                                </button>
-                                {CATEGORIES.map(cat => {
-                                    const count = servers.filter(s => s.category === cat.key).length;
-                                    const isActive = activeTab === cat.key;
-                                    return (
-                                        <button 
-                                            key={cat.key} 
-                                            onClick={() => setActiveTab(cat.key)}
-                                            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 ${isActive ? `border-${cat.color.split('-')[1]}-600 ${cat.color}` : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-                                        >
-                                            {cat.label} 
-                                            <span className={`px-1.5 py-0.5 rounded-full text-xs ${isActive ? cat.bg : 'bg-slate-100 text-slate-600'}`}>{count}</span>
-                                        </button>
-                                    )
-                                })}
-                            </div>
-
-                            <div className="flex items-center bg-slate-100 p-1 rounded-lg ml-4">
-                                <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow text-slate-800' : 'text-slate-400 hover:text-slate-600'}`} title="List View"><List size={18} /></button>
-                                <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow text-slate-800' : 'text-slate-400 hover:text-slate-600'}`} title="Grid View"><LayoutGrid size={18} /></button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Content */}
-                    <main className="flex-1 overflow-y-auto bg-slate-50 p-6 custom-scroll pb-24">
+                    {/* MAIN CONTENT */}
+                    <main className="flex-1 overflow-y-auto custom-scroll p-6 pb-32">
+                        
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
                                 <button 
                                     onClick={toggleAllInView} 
-                                    className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm"
+                                    className="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-violet-600 transition-colors bg-white px-3 py-1.5 rounded-md border border-slate-200 shadow-sm"
                                 >
-                                    {filteredServers.length > 0 && filteredServers.every(s => selectedIds.has(s.id)) ? <CheckSquare size={18} className="text-indigo-600" /> : <Square size={18} />}
-                                    Select All Visible
+                                    {filteredServers.length > 0 && filteredServers.every(s => selectedIds.has(s.id)) 
+                                        ? <CheckSquare size={16} className="text-violet-600" /> 
+                                        : <Square size={16} />}
+                                    Select All {filteredServers.length > 0 ? `(${filteredServers.length})` : ''}
                                 </button>
-                                <span className="text-xs text-slate-400">
-                                    {filteredServers.length} result{filteredServers.length !== 1 && 's'}
-                                </span>
                             </div>
                         </div>
 
                         {viewMode === 'list' ? (
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-visible">
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                                 <table className="w-full text-left text-sm">
-                                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-xs">
+                                    <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-semibold text-xs uppercase tracking-wider backdrop-blur-sm">
                                         <tr>
-                                            <th className="px-6 py-4 w-14"><div className="w-5"></div></th>
+                                            <th className="px-6 py-4 w-14"></th>
                                             <th className="px-6 py-4">Server ID</th>
                                             <th className="px-6 py-4">IP Address</th>
                                             <th className="px-6 py-4">Provider</th>
                                             <th className="px-6 py-4">Category</th>
                                             <th className="px-6 py-4">Status</th>
-                                            <th className="px-6 py-4 text-right">Actions</th>
+                                            <th className="px-6 py-4 text-right"></th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {filteredServers.map(server => {
                                             const isSelected = selectedIds.has(server.id);
                                             return (
-                                                <tr key={server.id} className={`transition-colors group ${isSelected ? 'bg-indigo-100 border-l-4 border-indigo-500' : 'hover:bg-slate-50 border-l-4 border-transparent'}`}>
+                                                <tr key={server.id} className={`group transition-colors ${isSelected ? 'bg-violet-50/60' : 'hover:bg-slate-50'}`}>
                                                     <td className="px-6 py-4">
-                                                        <button onClick={() => handleSelection(server.id)} className={`transition-colors ${isSelected ? 'text-indigo-700' : 'text-slate-300 hover:text-indigo-600'}`}>
-                                                            {isSelected ? <CheckSquare size={20} /> : <Square size={20} />}
+                                                        <button onClick={() => handleSelection(server.id)} className={`transition-colors ${isSelected ? 'text-violet-600' : 'text-slate-300 hover:text-slate-500'}`}>
+                                                            {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
                                                         </button>
                                                     </td>
-                                                    <td onClick={(e) => { e.stopPropagation(); handleSingleCopy(server.id); }} className="px-6 py-4 font-mono font-bold text-slate-700 cursor-pointer hover:text-indigo-600 transition-colors" title="Click to copy ID">
-                                                        {server.id}
+                                                    <td className="px-6 py-4">
+                                                        <span 
+                                                            onClick={(e) => { e.stopPropagation(); handleCopy(server.id, 'ID'); }}
+                                                            className="font-mono font-medium text-slate-700 hover:text-violet-600 cursor-pointer border-b border-dashed border-slate-300 hover:border-violet-400 transition-colors pb-0.5"
+                                                        >
+                                                            {server.id}
+                                                        </span>
                                                     </td>
-                                                    <td className="px-6 py-4 font-mono text-slate-500">{server.ip || '-'}</td>
+                                                    <td className="px-6 py-4 font-mono text-xs text-slate-500">{server.ip || <span className="text-slate-300">-</span>}</td>
                                                     <td className="px-6 py-4 text-slate-600">{server.provider}</td>
-                                                    <td className="px-6 py-4"><CatBadge cat={server.category} /></td>
-                                                    <td className="px-6 py-4"><StatusBadge status={server.status} category={server.category} /></td>
+                                                    <td className="px-6 py-4"><CategoryBadge cat={server.category} /></td>
+                                                    <td className="px-6 py-4"><StatusBadge status={server.status} /></td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <div className="flex justify-end gap-2">
-                                                            <button onClick={() => openModal(server)} className="p-2 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 rounded-lg transition-colors" title="Edit"><Edit2 size={16} /></button>
-                                                            <div className="relative">
-                                                                <button onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === server.id ? null : server.id); setIsBulkMenuOpen(false); setIsBulkStatusMenuOpen(false); }} className={`p-2 hover:bg-indigo-50 rounded-lg transition-colors ${openMenuId === server.id ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-indigo-600'}`} title="Move"><ArrowRight size={16} /></button>
-                                                                {openMenuId === server.id && (
-                                                                    <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-xl py-1 border border-slate-100 z-50 animate-fade-in text-left">
-                                                                        <div className="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-50 mb-1">Move to...</div>
-                                                                        {CATEGORIES.filter(c => c.key !== server.category).map(c => (
-                                                                            <button key={c.key} onClick={(e) => { e.stopPropagation(); handleMove(server.id, c.key); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-colors">
-                                                                                <div className={`w-2 h-2 rounded-full bg-${c.color.split('-')[1]}-500`}></div>{c.label}
-                                                                            </button>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </div>
+                                                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button onClick={() => openModal(server)} className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"><Edit2 size={14} /></button>
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === server.id ? null : server.id); }} 
+                                                                className={`p-2 rounded-lg transition-colors ${openMenuId === server.id ? 'bg-violet-100 text-violet-700' : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'}`}
+                                                            >
+                                                                <ArrowRight size={14} />
+                                                            </button>
+                                                            {/* Dropdown Logic Here (same as before but styled) */}
+                                                            {openMenuId === server.id && (
+                                                                <div className="absolute right-12 mt-2 w-40 bg-white rounded-lg shadow-xl ring-1 ring-black/5 z-50 animate-enter py-1">
+                                                                    <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-50 mb-1">Move to...</div>
+                                                                    {CATEGORIES.filter(c => c.key !== server.category).map(c => (
+                                                                        <button key={c.key} onClick={(e) => { e.stopPropagation(); handleMove(server.id, c.key); }} className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 text-slate-700 transition-colors flex items-center gap-2">
+                                                                            <span className={`w-1.5 h-1.5 rounded-full ${c.color.split(' ')[0].replace('text-', 'bg-')}`}></span>
+                                                                            {c.label}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>
                                             );
                                         })}
                                         {filteredServers.length === 0 && (
-                                            <tr><td colSpan="7" className="text-center py-16 text-slate-400 italic">No servers found matching your search.</td></tr>
+                                            <tr><td colSpan="7" className="text-center py-20 text-slate-400">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <Search size={32} className="opacity-20" />
+                                                    <span className="text-sm">No servers found.</span>
+                                                </div>
+                                            </td></tr>
                                         )}
                                     </tbody>
                                 </table>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                                 {filteredServers.map(server => {
                                     const isSelected = selectedIds.has(server.id);
                                     return (
-                                        <div key={server.id} onClick={(e) => { if(!e.target.closest('button')) handleSelection(server.id); }} className={`bg-white p-5 rounded-xl border transition-all cursor-pointer group relative ${isSelected ? 'ring-2 ring-indigo-500 border-indigo-500 bg-indigo-50 shadow-md' : 'border-slate-200 shadow-sm hover:shadow-md'}`}>
-                                            <div className="flex justify-between items-start mb-4">
+                                        <div 
+                                            key={server.id} 
+                                            onClick={(e) => { if(!e.target.closest('button')) handleSelection(server.id); }}
+                                            className={`group relative bg-white p-4 rounded-xl border transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-pointer ${isSelected ? 'ring-2 ring-violet-500 border-transparent shadow-sm' : 'border-slate-200 shadow-sm'}`}
+                                        >
+                                            <div className="flex justify-between items-start mb-3">
                                                 <div className="flex items-center gap-3">
-                                                    <button onClick={(e) => { e.stopPropagation(); handleSelection(server.id); }} className="hover:scale-110 transition-transform">
-                                                        {isSelected ? <CheckSquare size={20} className="text-indigo-600" /> : <Square size={20} className="text-slate-300 hover:text-indigo-600" />}
+                                                    <button onClick={(e) => { e.stopPropagation(); handleSelection(server.id); }} className={`transition-colors ${isSelected ? 'text-violet-600' : 'text-slate-300 hover:text-slate-500'}`}>
+                                                        {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
                                                     </button>
-                                                    <div>
-                                                        <div onClick={(e) => { e.stopPropagation(); handleSingleCopy(server.id); }} className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-sm inline-block hover:bg-indigo-100 hover:text-indigo-700 transition-colors" title="Click to copy ID">{server.id}</div>
-                                                        {server.ip && (<div className="flex items-center gap-1 text-xs text-slate-500 mt-1 font-mono"><Network size={10} /> {server.ip}</div>)}
+                                                    <div className="flex flex-col">
+                                                        <span 
+                                                            onClick={(e) => { e.stopPropagation(); handleCopy(server.id, 'ID'); }}
+                                                            className="font-mono font-bold text-sm text-slate-800 hover:text-violet-600 cursor-pointer"
+                                                        >
+                                                            {server.id}
+                                                        </span>
                                                     </div>
                                                 </div>
-                                                <button onClick={(e) => {e.stopPropagation(); openModal(server)}} className="text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"><Edit2 size={16} /></button>
+                                                <button onClick={(e) => {e.stopPropagation(); openModal(server)}} className="text-slate-300 hover:text-violet-600 opacity-0 group-hover:opacity-100 transition-opacity"><Edit2 size={14} /></button>
                                             </div>
-                                            <div className="mb-4">
-                                                <div className="text-sm font-semibold text-slate-900 truncate mb-1" title={server.provider}>{server.provider}</div>
-                                                <div className="flex items-center gap-2"><span className={`w-2 h-2 rounded-full bg-${CATEGORIES.find(c => c.key === server.category)?.color.split('-')[1]}-500`}></span><span className="text-xs text-slate-500">{server.category}</span></div>
+                                            
+                                            <div className="space-y-2 mb-4">
+                                                <div className="flex items-center gap-2 text-xs text-slate-500">
+                                                    <Network size={12} /> 
+                                                    <span className="font-mono">{server.ip || '-'}</span>
+                                                </div>
+                                                <div className="text-xs font-medium text-slate-700 truncate" title={server.provider}>
+                                                    {server.provider}
+                                                </div>
                                             </div>
-                                            <div className="flex items-center justify-between border-t border-slate-50 pt-4 mt-2">
-                                                <StatusBadge status={server.status} category={server.category} />
+
+                                            <div className="flex items-center justify-between border-t border-slate-50 pt-3">
+                                                <StatusBadge status={server.status} />
+                                                
                                                 <div className="relative">
-                                                    <button onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === server.id ? null : server.id); setIsBulkMenuOpen(false); setIsBulkStatusMenuOpen(false); }} className={`text-xs font-bold flex items-center gap-1 py-1 px-2 rounded transition-colors ${openMenuId === server.id ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'}`}>MOVE <ArrowRight size={12} /></button>
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === server.id ? null : server.id); }}
+                                                        className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 py-1 px-2 rounded hover:bg-slate-100 text-slate-400 hover:text-violet-600 transition-colors`}
+                                                    >
+                                                        Actions <ChevronUp size={10} />
+                                                    </button>
+                                                    
                                                     {openMenuId === server.id && (
-                                                        <div className="absolute right-0 bottom-full mb-2 w-40 bg-white rounded-lg shadow-xl py-1 border border-slate-100 z-50 animate-fade-in text-left">
+                                                        <div className="absolute right-0 bottom-full mb-1 w-36 bg-white rounded-lg shadow-xl ring-1 ring-black/5 z-50 animate-slide-up py-1">
                                                             {CATEGORIES.filter(c => c.key !== server.category).map(c => (
-                                                                <button key={c.key} onClick={(e) => { e.stopPropagation(); handleMove(server.id, c.key); }} className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 text-slate-700 transition-colors">{c.label}</button>
+                                                                <button key={c.key} onClick={(e) => { e.stopPropagation(); handleMove(server.id, c.key); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 text-slate-700 transition-colors">
+                                                                    Move to {c.label}
+                                                                </button>
                                                             ))}
                                                         </div>
                                                     )}
@@ -533,58 +557,104 @@
                         )}
                     </main>
 
+                    {/* BULK ACTIONS BAR */}
                     {selectedIds.size > 0 && (
-                        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white rounded-xl px-6 py-4 flex items-center justify-between shadow-2xl animate-slide-up z-50 w-auto min-w-[700px]">
-                            <div className="flex items-center gap-6">
-                                <span className="font-bold bg-white/20 px-4 py-1.5 rounded-lg text-sm">{selectedIds.size} Selected</span>
-                                <button onClick={() => setSelectedIds(new Set())} className="text-indigo-100 hover:text-white text-sm underline opacity-80 hover:opacity-100 font-medium">Clear Selection</button>
-                            </div>
-                            <div className="flex items-center gap-3">
+                        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 animate-slide-up">
+                            <div className="bg-slate-900/95 backdrop-blur text-white rounded-2xl shadow-2xl px-2 py-2 flex items-center gap-2 border border-slate-700/50">
+                                
+                                <div className="pl-4 pr-3 flex items-center gap-3 border-r border-slate-700/50 mr-1">
+                                    <span className="font-bold text-sm bg-white/10 px-2 py-0.5 rounded text-white">{selectedIds.size}</span>
+                                    <button onClick={() => setSelectedIds(new Set())} className="text-slate-400 hover:text-white text-xs font-medium uppercase tracking-wider transition-colors">Clear</button>
+                                </div>
+
+                                {/* Move Dropdown */}
                                 <div className="relative">
-                                    <button onClick={(e) => { e.stopPropagation(); setIsBulkMenuOpen(!isBulkMenuOpen); setIsBulkStatusMenuOpen(false); }} className="flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors">Move to... <ChevronUp size={16} /></button>
+                                    <button onClick={() => { setIsBulkMenuOpen(!isBulkMenuOpen); setIsBulkStatusMenuOpen(false); }} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isBulkMenuOpen ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-slate-200'}`}>
+                                        Move <ChevronUp size={14} />
+                                    </button>
                                     {isBulkMenuOpen && (
-                                        <div className="absolute bottom-full mb-3 w-56 bg-white rounded-lg shadow-xl py-2 text-slate-800 border border-slate-100 z-50 animate-fade-in">
+                                        <div className="absolute bottom-full left-0 mb-3 w-48 bg-white rounded-xl shadow-2xl overflow-hidden py-1 text-slate-800 animate-enter origin-bottom-left">
                                             {CATEGORIES.map(c => (
-                                                <button key={c.key} onClick={() => handleBulkMove(c.key)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-3 transition-colors"><div className={`w-2.5 h-2.5 rounded-full bg-${c.color.split('-')[1]}-500`}></div>{c.label}</button>
+                                                <button key={c.key} onClick={() => handleBulkMove(c.key)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-2 transition-colors border-b border-slate-50 last:border-0">
+                                                    <span className={`w-2 h-2 rounded-full ${c.color.split(' ')[0].replace('text-', 'bg-')}`}></span> {c.label}
+                                                </button>
                                             ))}
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Status Dropdown */}
                                 <div className="relative">
-                                    <button onClick={(e) => { e.stopPropagation(); setIsBulkStatusMenuOpen(!isBulkStatusMenuOpen); setIsBulkMenuOpen(false); }} className="flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors">Set Status... <ChevronUp size={16} /></button>
+                                    <button onClick={() => { setIsBulkStatusMenuOpen(!isBulkStatusMenuOpen); setIsBulkMenuOpen(false); }} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isBulkStatusMenuOpen ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-slate-200'}`}>
+                                        Status <ChevronUp size={14} />
+                                    </button>
                                     {isBulkStatusMenuOpen && (
-                                        <div className="absolute bottom-full mb-3 w-56 bg-white rounded-lg shadow-xl py-2 text-slate-800 border border-slate-100 z-50 animate-fade-in">
+                                        <div className="absolute bottom-full left-0 mb-3 w-40 bg-white rounded-xl shadow-2xl overflow-hidden py-1 text-slate-800 animate-enter origin-bottom-left">
                                             {STATUS_OPTIONS.map(status => (
-                                                <button key={status} onClick={() => handleBulkStatus(status)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-3 transition-colors"><span className={`w-2.5 h-2.5 rounded-full ${status === 'Active' ? 'bg-emerald-500' : status === 'Down' ? 'bg-rose-500' : 'bg-orange-500'}`}></span>{status}</button>
+                                                <button key={status} onClick={() => handleBulkStatus(status)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 font-medium transition-colors border-b border-slate-50 last:border-0">
+                                                    {status}
+                                                </button>
                                             ))}
                                         </div>
                                     )}
                                 </div>
-                                <button onClick={handleCopy} className="flex items-center gap-2 bg-indigo-700 hover:bg-indigo-800 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors"><Copy size={16} /> Copy</button>
-                                <div className="w-px h-8 bg-indigo-500 mx-2"></div>
-                                <button onClick={handleDelete} className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors"><Trash2 size={16} /></button>
+
+                                <div className="w-px h-6 bg-slate-700/50 mx-1"></div>
+
+                                <button onClick={handleBulkCopy} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 text-slate-200 transition-colors" title="Copy Selected IDs">
+                                    <Copy size={16} />
+                                </button>
+                                
+                                <button onClick={handleDelete} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors" title="Delete Selected">
+                                    <Trash2 size={16} />
+                                </button>
                             </div>
                         </div>
                     )}
 
+                    {/* MODAL */}
                     {isModalOpen && (
-                        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-100 transition-all">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-xl font-bold text-slate-900">{editingServer ? 'Edit Server' : 'Add Server'}</h3>
-                                    <button onClick={() => setIsModalOpen(false)} className="p-1 hover:bg-slate-100 rounded-full transition-colors"><X className="text-slate-400 hover:text-slate-600" /></button>
+                        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-enter">
+                            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                    <h3 className="font-bold text-slate-800">{editingServer ? 'Edit Server' : 'Add New Server'}</h3>
+                                    <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
                                 </div>
-                                <form onSubmit={handleSave} className="space-y-4">
+                                <form onSubmit={handleSave} className="p-6 space-y-5">
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div><label className="block text-sm font-bold text-slate-700 mb-1.5">Server ID</label><input required className="w-full border border-slate-300 rounded-lg p-2.5 font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" value={formData.id} onChange={e => setFormData({...formData, id: e.target.value})} placeholder="e.g. sl2149" /></div>
-                                        <div><label className="block text-sm font-bold text-slate-700 mb-1.5">IP Address</label><input className="w-full border border-slate-300 rounded-lg p-2.5 font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" value={formData.ip} onChange={e => setFormData({...formData, ip: e.target.value})} placeholder="192.168..." /></div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">ID</label>
+                                            <input required className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none transition-all" value={formData.id} onChange={e => setFormData({...formData, id: e.target.value})} placeholder="sl..." />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">IP Address</label>
+                                            <input className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none transition-all" value={formData.ip} onChange={e => setFormData({...formData, ip: e.target.value})} placeholder="0.0.0.0" />
+                                        </div>
                                     </div>
-                                    <div><label className="block text-sm font-bold text-slate-700 mb-1.5">Provider</label><input required className="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" value={formData.provider} onChange={e => setFormData({...formData, provider: e.target.value})} placeholder="e.g. OVH.pt" /></div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Provider</label>
+                                        <input required className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none transition-all" value={formData.provider} onChange={e => setFormData({...formData, provider: e.target.value})} placeholder="Provider Name" />
+                                    </div>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div><label className="block text-sm font-bold text-slate-700 mb-1.5">Category</label><select className="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>{CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}</select></div>
-                                        <div><label className="block text-sm font-bold text-slate-700 mb-1.5">Status</label><select className="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>{STATUS_OPTIONS.map(status => <option key={status} value={status}>{status}</option>)}</select></div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Category</label>
+                                            <select className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none transition-all" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                                                {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</label>
+                                            <select className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none transition-all" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                                                {STATUS_OPTIONS.map(status => <option key={status} value={status}>{status}</option>)}
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div className="pt-6 flex justify-end gap-3"><button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-medium transition-colors">Cancel</button><button type="submit" className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold shadow-lg shadow-indigo-200 transition-all hover:translate-y-px active:translate-y-0">Save Changes</button></div>
+                                    <div className="pt-4 flex justify-end gap-3">
+                                        <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
+                                        <button type="submit" className="px-6 py-2 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-lg shadow-slate-200 transition-all hover:translate-y-px active:translate-y-0">
+                                            {editingServer ? 'Save Changes' : 'Create Server'}
+                                        </button>
+                                    </div>
                                 </form>
                             </div>
                         </div>
