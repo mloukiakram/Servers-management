@@ -120,7 +120,7 @@
                 return saved ? JSON.parse(saved) : { token: '', owner: '', repo: '', path: 'servers.json' };
             });
 
-            // --- GITHUB API LOGIC ---
+            // --- GITHUB API LOGIC (IMPROVED ERROR HANDLING) ---
             const saveToGitHub = async (newServers) => {
                 if (!ghConfig.token || !ghConfig.owner || !ghConfig.repo) {
                     showToast("Configure GitHub Settings to save!", "error");
@@ -129,8 +129,9 @@
 
                 setIsSaving(true);
                 try {
-                    // 1. Get current SHA of the file (required by GitHub API to update)
                     const apiUrl = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${ghConfig.path}`;
+                    
+                    // 1. Get current SHA
                     const getRes = await fetch(apiUrl, {
                         headers: {
                             'Authorization': `token ${ghConfig.token}`,
@@ -138,12 +139,15 @@
                         }
                     });
 
-                    if (!getRes.ok) throw new Error("Failed to verify file on GitHub");
+                    if (!getRes.ok) {
+                        const err = await getRes.json();
+                        throw new Error(`Read Failed: ${err.message}`);
+                    }
+                    
                     const fileData = await getRes.json();
                     const sha = fileData.sha;
 
-                    // 2. Prepare content (Base64 encoded)
-                    // We use btoa with unescape/encodeURIComponent to handle UTF-8 chars correctly if any
+                    // 2. Prepare content
                     const content = btoa(unescape(encodeURIComponent(JSON.stringify(newServers, null, 2))));
 
                     // 3. Push Update
@@ -160,13 +164,16 @@
                         })
                     });
 
-                    if (!putRes.ok) throw new Error("Failed to write to GitHub");
+                    if (!putRes.ok) {
+                        const err = await putRes.json();
+                        throw new Error(`Write Failed: ${err.message}`);
+                    }
                     
-                    showToast("Successfully synced to GitHub!");
+                    showToast("Synced to GitHub!");
                     return true;
                 } catch (error) {
                     console.error(error);
-                    showToast(`Sync Error: ${error.message}`, 'error');
+                    showToast(`${error.message}`, 'error');
                     return false;
                 } finally {
                     setIsSaving(false);
@@ -175,14 +182,13 @@
 
             const fetchFromGitHub = async () => {
                 setIsLoading(true);
-                // If config exists, fetch via API to avoid cache delays
                 if (ghConfig.token && ghConfig.owner && ghConfig.repo) {
                     try {
                         const apiUrl = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${ghConfig.path}`;
                         const res = await fetch(apiUrl, {
                             headers: {
                                 'Authorization': `token ${ghConfig.token}`,
-                                'Accept': 'application/vnd.github.v3.raw' // Request raw content
+                                'Accept': 'application/vnd.github.v3.raw'
                             }
                         });
                         if (res.ok) {
@@ -194,9 +200,8 @@
                     } catch (e) { console.error("API fetch failed, falling back to standard fetch", e); }
                 }
 
-                // Fallback: Standard HTTP fetch
                 try {
-                    const response = await fetch('./servers.json?t=' + new Date().getTime()); // Cache buster
+                    const response = await fetch('./servers.json?t=' + new Date().getTime());
                     if (!response.ok) throw new Error('Failed to load DB');
                     const data = await response.json();
                     setServers(data);
