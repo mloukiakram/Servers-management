@@ -397,5 +397,12 @@
     "provider": "Ovh.pt (OVH)",
     "category": "New",
     "status": "Active"
+  },
+  {
+    "id": "sl2245",
+    "ip": "147.135.36.106",
+    "provider": "Ovh.pt (OVH)",
+    "category": "New",
+    "status": "Active"
   }
 ]
