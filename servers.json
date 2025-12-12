@@ -101,7 +101,7 @@
     "id": "sl2243",
     "ip": "147.135.1.218",
     "provider": "OVH (OVH)",
-    "category": "New",
+    "category": "Test",
     "status": "Active"
   },
   {
@@ -395,14 +395,14 @@
     "id": "sl2244",
     "ip": "147.135.38.140",
     "provider": "Ovh.pt (OVH)",
-    "category": "New",
+    "category": "Test",
     "status": "Active"
   },
   {
     "id": "sl2245",
     "ip": "147.135.36.106",
     "provider": "Ovh.pt (OVH)",
-    "category": "New",
+    "category": "Test",
     "status": "Active"
   },
   {
