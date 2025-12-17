@@ -381,7 +381,7 @@
     "id": "sl2237",
     "ip": "15.204.155.171",
     "provider": "imageleet (OVH)",
-    "category": "Production",
+    "category": "Low Delivery",
     "status": "Active"
   },
   {
@@ -402,14 +402,14 @@
     "id": "sl2246",
     "ip": "147.135.7.95",
     "provider": "Ovh.pt (OVH)",
-    "category": "New",
+    "category": "Low Delivery",
     "status": "Active"
   },
   {
     "id": "sl2247",
     "ip": "91.134.243.58",
     "provider": "Ovh.pt (OVH)",
-    "category": "New",
+    "category": "Low Delivery",
     "status": "Active"
   }
 ]
