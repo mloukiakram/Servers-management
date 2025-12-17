@@ -231,13 +231,6 @@
     "status": "Active"
   },
   {
-    "id": "sl2195",
-    "ip": "185.49.70.102",
-    "provider": "coretek.host",
-    "category": "Low Delivery",
-    "status": "Active"
-  },
-  {
     "id": "sl2155",
     "ip": "217.182.73.125",
     "provider": "Ovh.pt",
