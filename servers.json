@@ -59,7 +59,7 @@
     "id": "sl2216",
     "ip": "145.239.89.157",
     "provider": "Ovh.pt (OVH)",
-    "category": "Issues",
+    "category": "To Return",
     "status": "Timed Out"
   },
   {
@@ -129,21 +129,21 @@
     "id": "sl2217",
     "ip": "146.59.32.47",
     "provider": "OVH.pt (OVH)",
-    "category": "Issues",
+    "category": "To Return",
     "status": "Timed Out"
   },
   {
     "id": "sl2218",
     "ip": "145.239.92.217",
     "provider": "Ovh.pt (OVH)",
-    "category": "Issues",
+    "category": "To Return",
     "status": "Timed Out"
   },
   {
     "id": "sl2219",
     "ip": "145.239.87.117",
     "provider": "Ovh.pt (OVH)",
-    "category": "Issues",
+    "category": "To Return",
     "status": "Timed Out"
   },
   {
@@ -192,7 +192,7 @@
     "id": "sl2215",
     "ip": "51.75.76.212",
     "provider": "Tvmserver (others)",
-    "category": "Others",
+    "category": "To Return",
     "status": "Active"
   },
   {
@@ -234,7 +234,7 @@
     "id": "sl2155",
     "ip": "217.182.73.125",
     "provider": "Ovh.pt",
-    "category": "Test",
+    "category": "To Return",
     "status": "Active"
   },
   {
