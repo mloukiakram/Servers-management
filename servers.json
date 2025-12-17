@@ -108,7 +108,7 @@
     "id": "sl2106",
     "ip": "51.75.40.248",
     "provider": "vertichost (OVH)",
-    "category": "Production",
+    "category": "Issues",
     "status": "Active"
   },
   {
@@ -122,7 +122,7 @@
     "id": "sl2184",
     "ip": "54.38.193.125",
     "provider": "OVH.pt (OVH)",
-    "category": "Low Delivery",
+    "category": "Issues",
     "status": "Timed Out"
   },
   {
