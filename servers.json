@@ -206,8 +206,8 @@
     "id": "sl2251",
     "ip": "145.239.43.148",
     "provider": "Ni-Host (OVH)",
-    "category": "Test",
-    "status": "Active"
+    "category": "Issues",
+    "status": "Timed Out"
   },
   {
     "id": "sl2252",
