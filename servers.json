@@ -56,20 +56,6 @@
     "status": "Active"
   },
   {
-    "id": "sl2216",
-    "ip": "145.239.89.157",
-    "provider": "Ovh.pt (OVH)",
-    "category": "To Return",
-    "status": "Timed Out"
-  },
-  {
-    "id": "sl2238",
-    "ip": "54.39.226.81",
-    "provider": "vertichost (OVH)",
-    "category": "Test",
-    "status": "Active"
-  },
-  {
     "id": "sl2201",
     "ip": "46.246.92.225",
     "provider": "Blue Vps (box 134)",
@@ -81,13 +67,6 @@
     "ip": "46.62.141.168",
     "provider": "Webdesignlabs (hetzner)",
     "category": "Test",
-    "status": "Active"
-  },
-  {
-    "id": "sl2239",
-    "ip": "57.128.200.154",
-    "provider": "OVH (OVH)",
-    "category": "Production",
     "status": "Active"
   },
   {
@@ -119,80 +98,10 @@
     "status": "Active"
   },
   {
-    "id": "sl2184",
-    "ip": "54.38.193.125",
-    "provider": "OVH.pt (OVH)",
-    "category": "Issues",
-    "status": "Timed Out"
-  },
-  {
-    "id": "sl2217",
-    "ip": "146.59.32.47",
-    "provider": "OVH.pt (OVH)",
-    "category": "To Return",
-    "status": "Timed Out"
-  },
-  {
-    "id": "sl2218",
-    "ip": "145.239.92.217",
-    "provider": "Ovh.pt (OVH)",
-    "category": "To Return",
-    "status": "Timed Out"
-  },
-  {
-    "id": "sl2219",
-    "ip": "145.239.87.117",
-    "provider": "Ovh.pt (OVH)",
-    "category": "To Return",
-    "status": "Timed Out"
-  },
-  {
-    "id": "sl2235",
-    "ip": "192.99.28.182",
-    "provider": "Thomashost (OVH)",
-    "category": "Test",
-    "status": "Active"
-  },
-  {
-    "id": "sl2236",
-    "ip": "54.38.243.111",
-    "provider": "Tvmserver (OVH)",
-    "category": "Issues",
-    "status": "Timed Out"
-  },
-  {
-    "id": "sl2162",
-    "ip": "178.162.169.43",
-    "provider": "3v-Host (others)",
-    "category": "Others",
-    "status": "Active"
-  },
-  {
     "id": "sl2209",
     "ip": "155.94.243.122",
     "provider": "Holhost (others)",
     "category": "Others",
-    "status": "Active"
-  },
-  {
-    "id": "sl2211",
-    "ip": "185.237.166.28",
-    "provider": "vikhost (others)",
-    "category": "Others",
-    "status": "Active"
-  },
-  {
-    "id": "sl2213",
-    "ip": "216.189.145.133",
-    "provider": "Vpsgod (others)",
-    "category": "Others",
-    "status": "Active"
-  },
-  {
-    "id": "sl2215",
-    "ip": "51.75.76.212",
-    "provider": "Tvmserver (others)",
-    "category": "To Return",
     "status": "Active"
   },
   {
@@ -231,24 +140,10 @@
     "status": "Active"
   },
   {
-    "id": "sl2155",
-    "ip": "217.182.73.125",
-    "provider": "Ovh.pt",
-    "category": "To Return",
-    "status": "Active"
-  },
-  {
     "id": "sl1538",
     "ip": "163.172.87.67",
     "provider": "Scaleway",
     "category": "Low Delivery",
-    "status": "Active"
-  },
-  {
-    "id": "sl2023",
-    "ip": "51.15.25.79",
-    "provider": "Scaleway",
-    "category": "Test",
     "status": "Active"
   },
   {
@@ -259,123 +154,11 @@
     "status": "Active"
   },
   {
-    "id": "sl2183",
-    "ip": "91.98.192.194",
-    "provider": "Hetzner (Webdesignlabs)",
-    "category": "Test",
-    "status": "Active"
-  },
-  {
-    "id": "sl2160",
-    "ip": "46.62.201.227",
-    "provider": "Hetzner (Storage-Vps)",
-    "category": "Test",
-    "status": "Active"
-  },
-  {
     "id": "sl2079",
     "ip": "157.15.124.206",
     "provider": "domainesia",
     "category": "To Return",
     "status": "Active"
-  },
-  {
-    "id": "sl2147",
-    "ip": "51.75.202.196",
-    "provider": "Ovh.pt (OVH)",
-    "category": "To Return",
-    "status": "Down"
-  },
-  {
-    "id": "sl2221",
-    "ip": "51.81.186.7",
-    "provider": "OVH (OVH)",
-    "category": "To Return",
-    "status": "Down"
-  },
-  {
-    "id": "sl2222",
-    "ip": "51.178.54.83",
-    "provider": "Ovh.pt (OVH)",
-    "category": "To Return",
-    "status": "Active"
-  },
-  {
-    "id": "sl2223",
-    "ip": "51.178.55.208",
-    "provider": "Ovh.pt (OVH)",
-    "category": "To Return",
-    "status": "Active"
-  },
-  {
-    "id": "sl2224",
-    "ip": "51.178.53.132",
-    "provider": "Ovh.pt (OVH)",
-    "category": "To Return",
-    "status": "Active"
-  },
-  {
-    "id": "sl2226",
-    "ip": "57.128.237.69",
-    "provider": "OVH (OVH)",
-    "category": "To Return",
-    "status": "Down"
-  },
-  {
-    "id": "sl2227",
-    "ip": "57.128.237.70",
-    "provider": "OVH (OVH)",
-    "category": "To Return",
-    "status": "Down"
-  },
-  {
-    "id": "sl2228",
-    "ip": "57.128.237.71",
-    "provider": "OVH (OVH)",
-    "category": "To Return",
-    "status": "Down"
-  },
-  {
-    "id": "sl2229",
-    "ip": "57.128.237.68",
-    "provider": "OVH (OVH)",
-    "category": "To Return",
-    "status": "Down"
-  },
-  {
-    "id": "sl2230",
-    "ip": "15.204.246.205",
-    "provider": "OVH (OVH)",
-    "category": "To Return",
-    "status": "Down"
-  },
-  {
-    "id": "sl2231",
-    "ip": "15.204.246.18",
-    "provider": "OVH (OVH)",
-    "category": "To Return",
-    "status": "Down"
-  },
-  {
-    "id": "sl2232",
-    "ip": "15.204.246.23",
-    "provider": "OVH (OVH)",
-    "category": "To Return",
-    "status": "Down"
-  },
-  {
-    "id": "sl2233",
-    "ip": "51.77.149.83",
-    "provider": "OVH (OVH)",
-    "category": "To Return",
-    "status": "Down"
-  },
-  {
-    "id": "sl2234",
-    "ip": "57.128.237.67",
-    "provider": "OVH (OVH)",
-    "category": "To Return",
-    "status": "Down"
   },
   {
     "id": "sl2237",
