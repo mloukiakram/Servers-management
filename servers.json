@@ -208,5 +208,12 @@
     "provider": "Ni-Host (OVH)",
     "category": "Production",
     "status": "Active"
+  },
+  {
+    "id": "sl2252",
+    "ip": "23.134.216.155",
+    "provider": "Nktele",
+    "category": "Production",
+    "status": "Active"
   }
 ]
