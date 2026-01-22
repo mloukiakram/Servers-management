@@ -3,49 +3,49 @@
     "id": "sl2149",
     "ip": "15.204.86.119",
     "provider": "OVH.pt (OVH)",
-    "category": "Production",
+    "category": "Issues",
     "status": "Active"
   },
   {
     "id": "sl2151",
     "ip": "15.204.236.255",
     "provider": "OVH.pt (OVH)",
-    "category": "Production",
+    "category": "Issues",
     "status": "Active"
   },
   {
     "id": "sl2156",
     "ip": "15.204.234.112",
     "provider": "OVH.pt (OVH)",
-    "category": "Production",
+    "category": "Issues",
     "status": "Active"
   },
   {
     "id": "sl2157",
     "ip": "15.204.235.163",
     "provider": "OVH.pt (OVH)",
-    "category": "Production",
+    "category": "Issues",
     "status": "Active"
   },
   {
     "id": "sl2168",
     "ip": "15.204.87.53",
     "provider": "OVH.pt (OVH)",
-    "category": "Production",
+    "category": "Issues",
     "status": "Active"
   },
   {
     "id": "sl2169",
     "ip": "15.204.87.148",
     "provider": "OVH.pt (OVH)",
-    "category": "Production",
+    "category": "Issues",
     "status": "Active"
   },
   {
     "id": "sl2170",
     "ip": "15.204.87.22",
     "provider": "Ovh.pt (OVH)",
-    "category": "Production",
+    "category": "Issues",
     "status": "Active"
   },
   {
@@ -66,21 +66,21 @@
     "id": "sl2137",
     "ip": "46.62.141.168",
     "provider": "Webdesignlabs (hetzner)",
-    "category": "Test",
+    "category": "Issues",
     "status": "Active"
   },
   {
     "id": "sl2242",
     "ip": "57.128.197.7",
     "provider": "OVH (OVH)",
-    "category": "Low Delivery",
+    "category": "Issues",
     "status": "Active"
   },
   {
     "id": "sl2243",
     "ip": "147.135.1.218",
     "provider": "OVH (OVH)",
-    "category": "Production",
+    "category": "Issues",
     "status": "Active"
   },
   {
@@ -129,7 +129,7 @@
     "id": "sl2192",
     "ip": "209.250.234.143",
     "provider": "Ex2",
-    "category": "Low Delivery",
+    "category": "Issues",
     "status": "Active"
   },
   {
@@ -164,28 +164,28 @@
     "id": "sl2244",
     "ip": "147.135.38.140",
     "provider": "Ovh.pt (OVH)",
-    "category": "Production",
+    "category": "Issues",
     "status": "Active"
   },
   {
     "id": "sl2245",
     "ip": "147.135.36.106",
     "provider": "Ovh.pt (OVH)",
-    "category": "Production",
+    "category": "Issues",
     "status": "Active"
   },
   {
     "id": "sl2246",
     "ip": "147.135.7.95",
     "provider": "Ovh.pt (OVH)",
-    "category": "Production",
+    "category": "Issues",
     "status": "Active"
   },
   {
     "id": "sl2247",
     "ip": "91.134.243.58",
     "provider": "Ovh.pt (OVH)",
-    "category": "Low Delivery",
+    "category": "Issues",
     "status": "Active"
   },
   {
@@ -206,7 +206,7 @@
     "id": "sl2252",
     "ip": "23.134.216.155",
     "provider": "Nktele",
-    "category": "Test",
+    "category": "Issues",
     "status": "Active"
   }
 ]
