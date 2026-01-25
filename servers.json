@@ -147,13 +147,6 @@
     "status": "Active"
   },
   {
-    "id": "sl2079",
-    "ip": "157.15.124.206",
-    "provider": "domainesia",
-    "category": "Test",
-    "status": "Active"
-  },
-  {
     "id": "sl2237",
     "ip": "15.204.155.171",
     "provider": "imageleet (OVH)",
