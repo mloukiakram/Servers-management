@@ -208,5 +208,12 @@
     "provider": "Hostripples (OVH)",
     "category": "Production",
     "status": "Active"
+  },
+  {
+    "id": "sl2255",
+    "ip": "145.239.82.46",
+    "provider": "biswashost (OVH)",
+    "category": "Production",
+    "status": "Active"
   }
 ]
