@@ -215,5 +215,12 @@
     "provider": "biswashost (OVH)",
     "category": "Production",
     "status": "Active"
+  },
+  {
+    "id": "sl2256",
+    "ip": "15.204.157.62",
+    "provider": "Adclichosting",
+    "category": "Production",
+    "status": "Active"
   }
 ]
