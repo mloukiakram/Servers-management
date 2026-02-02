@@ -21,27 +21,6 @@
     "status": "Down"
   },
   {
-    "id": "sl2168",
-    "ip": "15.204.87.53",
-    "provider": "OVH.pt (OVH)",
-    "category": "Issues",
-    "status": "Down"
-  },
-  {
-    "id": "sl2169",
-    "ip": "15.204.87.148",
-    "provider": "OVH.pt (OVH)",
-    "category": "Issues",
-    "status": "Down"
-  },
-  {
-    "id": "sl2170",
-    "ip": "15.204.87.22",
-    "provider": "Ovh.pt (OVH)",
-    "category": "Issues",
-    "status": "Down"
-  },
-  {
     "id": "sl2199",
     "ip": "15.204.13.104",
     "provider": "Silkhostt (OVH)",
@@ -54,20 +33,6 @@
     "provider": "Blue Vps (box 134)",
     "category": "Production",
     "status": "Active"
-  },
-  {
-    "id": "sl2242",
-    "ip": "57.128.197.7",
-    "provider": "OVH (OVH)",
-    "category": "Issues",
-    "status": "Down"
-  },
-  {
-    "id": "sl2243",
-    "ip": "147.135.1.218",
-    "provider": "OVH (OVH)",
-    "category": "Issues",
-    "status": "Down"
   },
   {
     "id": "sl2150",
@@ -117,41 +82,6 @@
     "provider": "1and1",
     "category": "Test",
     "status": "Active"
-  },
-  {
-    "id": "sl2237",
-    "ip": "15.204.155.171",
-    "provider": "imageleet (OVH)",
-    "category": "Issues",
-    "status": "Down"
-  },
-  {
-    "id": "sl2244",
-    "ip": "147.135.38.140",
-    "provider": "Ovh.pt (OVH)",
-    "category": "Issues",
-    "status": "Down"
-  },
-  {
-    "id": "sl2245",
-    "ip": "147.135.36.106",
-    "provider": "Ovh.pt (OVH)",
-    "category": "Issues",
-    "status": "Down"
-  },
-  {
-    "id": "sl2246",
-    "ip": "147.135.7.95",
-    "provider": "Ovh.pt (OVH)",
-    "category": "Issues",
-    "status": "Down"
-  },
-  {
-    "id": "sl2247",
-    "ip": "91.134.243.58",
-    "provider": "Ovh.pt (OVH)",
-    "category": "Issues",
-    "status": "Down"
   },
   {
     "id": "sl2248",
