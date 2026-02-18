@@ -42,13 +42,6 @@
     "status": "Down"
   },
   {
-    "id": "sl2209",
-    "ip": "155.94.243.122",
-    "provider": "Holhost (others)",
-    "category": "Test",
-    "status": "Active"
-  },
-  {
     "id": "sl1960",
     "ip": "45.32.152.122",
     "provider": "Geckohost",
