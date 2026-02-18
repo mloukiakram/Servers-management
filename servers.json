@@ -145,5 +145,12 @@
     "provider": "Webdesignlabs (Hetzner)",
     "category": "Production",
     "status": "Active"
+  },
+  {
+    "id": "sl2268",
+    "ip": "149.202.10.34",
+    "provider": "Thomashost (OVH)",
+    "category": "Test",
+    "status": "Active"
   }
 ]
