@@ -73,14 +73,14 @@
     "id": "sl1963",
     "ip": "104.192.4.57",
     "provider": "1and1",
-    "category": "Test",
+    "category": "Production",
     "status": "Active"
   },
   {
     "id": "sl2248",
     "ip": "70.35.205.92",
     "provider": "1and1",
-    "category": "Test",
+    "category": "Production",
     "status": "Active"
   },
   {
