@@ -124,5 +124,12 @@
     "provider": "Cloud-Center (OVH)",
     "category": "Issues",
     "status": "Down"
+  },
+  {
+    "id": "sl2262",
+    "ip": "173.201.39.161",
+    "provider": "velia",
+    "category": "Others",
+    "status": "Active"
   }
 ]
