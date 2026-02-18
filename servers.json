@@ -138,5 +138,12 @@
     "provider": "papu (OVH)",
     "category": "Production",
     "status": "Active"
+  },
+  {
+    "id": "sl2266",
+    "ip": "46.224.196.126",
+    "provider": "Webdesignlabs (Hetzner)",
+    "category": "Production",
+    "status": "Active"
   }
 ]
