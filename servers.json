@@ -84,13 +84,6 @@
     "status": "Down"
   },
   {
-    "id": "sl2259",
-    "ip": "94.156.104.51",
-    "provider": "Warez-Host",
-    "category": "Issues",
-    "status": "Down"
-  },
-  {
     "id": "sl2269",
     "ip": "91.121.229.141",
     "provider": "Cloud-Center (OVH)",
