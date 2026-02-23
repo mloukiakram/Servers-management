@@ -159,5 +159,12 @@
     "provider": "papu (OVH)",
     "category": "Production",
     "status": "Active"
+  },
+  {
+    "id": "sl2271",
+    "ip": "95.216.61.111",
+    "provider": "Beehosting.pro (Hetzner)",
+    "category": "Production",
+    "status": "Active"
   }
 ]
