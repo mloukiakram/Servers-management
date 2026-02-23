@@ -152,5 +152,12 @@
     "provider": "Thomashost (OVH)",
     "category": "Test",
     "status": "Active"
+  },
+  {
+    "id": "sl2270",
+    "ip": "15.204.187.183",
+    "provider": "papu (OVH)",
+    "category": "Production",
+    "status": "Active"
   }
 ]
