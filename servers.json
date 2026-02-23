@@ -31,7 +31,7 @@
     "id": "sl2201",
     "ip": "46.246.92.225",
     "provider": "Blue Vps (box 134)",
-    "category": "Production",
+    "category": "Low Delivery",
     "status": "Active"
   },
   {
@@ -45,14 +45,14 @@
     "id": "sl1960",
     "ip": "45.32.152.122",
     "provider": "Geckohost",
-    "category": "Production",
+    "category": "Low Delivery",
     "status": "Active"
   },
   {
     "id": "sl2181",
     "ip": "212.95.42.194",
     "provider": "Lease Web",
-    "category": "Production",
+    "category": "Low Delivery",
     "status": "Active"
   },
   {
@@ -94,7 +94,7 @@
     "id": "sl2255",
     "ip": "145.239.82.46",
     "provider": "biswashost (OVH)",
-    "category": "Production",
+    "category": "Low Delivery",
     "status": "Active"
   },
   {
