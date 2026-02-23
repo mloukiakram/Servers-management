@@ -28,13 +28,6 @@
     "status": "Active"
   },
   {
-    "id": "sl2150",
-    "ip": "217.182.73.127",
-    "provider": "Ovh.pt (OVH)",
-    "category": "Issues",
-    "status": "Down"
-  },
-  {
     "id": "sl1960",
     "ip": "45.32.152.122",
     "provider": "Geckohost",
