@@ -166,5 +166,12 @@
     "provider": "Beehosting.pro (Hetzner)",
     "category": "Production",
     "status": "Active"
+  },
+  {
+    "id": "sl2272",
+    "ip": "88.99.170.243",
+    "provider": "Minivps.com.br (Hetzner)",
+    "category": "Production",
+    "status": "Active"
   }
 ]
