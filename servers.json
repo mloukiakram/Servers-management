@@ -77,13 +77,6 @@
     "status": "Active"
   },
   {
-    "id": "sl2257",
-    "ip": "104.168.48.10",
-    "provider": "Pnshostings",
-    "category": "Issues",
-    "status": "Down"
-  },
-  {
     "id": "sl2269",
     "ip": "91.121.229.141",
     "provider": "Cloud-Center (OVH)",
