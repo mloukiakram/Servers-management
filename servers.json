@@ -1,12 +1,5 @@
 [
   {
-    "id": "sl2157",
-    "ip": "15.204.235.163",
-    "provider": "OVH.pt (OVH)",
-    "category": "Issues",
-    "status": "Down"
-  },
-  {
     "id": "sl2199",
     "ip": "15.204.13.104",
     "provider": "Silkhostt (OVH)",
